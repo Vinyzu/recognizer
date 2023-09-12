@@ -1,4 +1,7 @@
-import os
+# -*- coding: utf-8 -*-
+# Author     : Vinyzu
+# GitHub     : https://github.com/Vinyzu
+# Description:
 from pathlib import Path
 
 from recaptcha_challenger import Detector

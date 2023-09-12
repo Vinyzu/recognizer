@@ -73,7 +73,7 @@ class Detector:
                 return None
             model = YOLOv8.from_pluggable_model(session, classes)
             # Lowering Thresholds for better results
-            model.conf_threshold, model.iou_threshold = 0.3, 0.3
+            model.conf_threshold, model.iou_threshold = 0.2, 0.2
         else:
             focus_label = self.modelhub.label_alias.get(label)
             if not focus_label:
@@ -104,9 +104,26 @@ class Detector:
                 tile_x2 = (j + 1) * tile_height
                 tile_y2 = (i + 1) * tile_width
 
+                # Calculate Tile Area
+                tile_area = (tile_x2 - tile_x1) * (tile_y2 - tile_y1)
+
+                # Calculate the intersection area
+                intersection_x1 = max(tile_x1, point_start[0])
+                intersection_x2 = min(tile_x2, point_end[0])
+                intersection_y1 = max(tile_y1, point_start[1])
+                intersection_y2 = min(tile_y2, point_end[1])
+
                 # Check if the current tile intersects with the bounding box
-                if (tile_x2 > point_start[0] and tile_x1 < point_end[0]) and (tile_y2 > point_start[1] and tile_y1 < point_end[1]):
-                    tiles_in_bbox.append(True)
+                if intersection_x1 < intersection_x2 and intersection_y1 < intersection_y2:
+                    # Getting intersection area coordinates and calculating Tile Coverage
+                    intersection_area = (intersection_x2 - intersection_x1) * (intersection_y2 - intersection_y1)
+                    tile_coverage_percentage = int(intersection_area / tile_area * 100)
+                    # Checking if tile coverage is above 5% (human eyes can not detect object boundaries in this range)
+                    if tile_coverage_percentage > 10:
+                        tiles_in_bbox.append(True)
+                    else:
+                        tiles_in_bbox.append(None)
+
                 else:
                     tiles_in_bbox.append(None)
 
@@ -163,11 +180,16 @@ class Detector:
             images = self.handle_single_image(images, area_captcha)
 
         if isinstance(images, list):
+            if len(images) == 1:
+                images = self.handle_single_image(images[0], area_captcha)
+
             if area_captcha and yolo_model:
                 response = [None for _ in range(16)]
                 # Turning Paths into Image Bytes
                 images = [image.read_bytes() if isinstance(image, Path) and image.exists() else image for image in images]
-                assert len(images) == 16
+                if len(images) != 16:
+                    logger.error(f"Images amount must equal 16. Is: {len(images)}")
+                    return response
 
                 # Creating Image Grid from List of Images
                 image_bytes, cv2_image = create_image_grid(images, 16)

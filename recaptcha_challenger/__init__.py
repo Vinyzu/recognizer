@@ -13,7 +13,6 @@ from .utils import init_log
 from .components.detector import Detector
 
 __all__ = ["Detector"]
-__version__ = "1.0"
 # solver.install(upgrade=True, flush_yolo=True)
 
 
