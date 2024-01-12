@@ -5,10 +5,10 @@ from typing import List, Tuple
 
 import cv2
 from numpy.typing import NDArray
-from numpy import uint8, concatenate
+from numpy import generic, concatenate
 
 
-def get_captcha_fields(img: NDArray[uint8]) -> Tuple[List[bytes], List[Tuple[int, int]]]:
+def get_captcha_fields(img: NDArray[generic]) -> Tuple[List[bytes], List[Tuple[int, int]]]:
     captcha_fields: List[Tuple[bytes, int, int]] = []
 
     # Turn image to grayscale and Apply a white threshold to it
@@ -48,7 +48,7 @@ def get_captcha_fields(img: NDArray[uint8]) -> Tuple[List[bytes], List[Tuple[int
     )
 
 
-def split_image_into_tiles(img: NDArray[uint8], tile_count: int) -> List[bytes]:
+def split_image_into_tiles(img: NDArray[generic], tile_count: int) -> List[bytes]:
     tiles = []
 
     # Get the dimensions of the image
@@ -74,7 +74,7 @@ def split_image_into_tiles(img: NDArray[uint8], tile_count: int) -> List[bytes]:
     return tiles
 
 
-def create_image_grid(images: List[NDArray[uint8]]) -> NDArray[uint8]:
+def create_image_grid(images: List[NDArray[generic]]) -> NDArray[generic]:
     cv2_images = images
     tile_count_per_row = int(math.sqrt(len(cv2_images)))
 

@@ -15,7 +15,7 @@ from ultralytics import YOLO
 from transformers import CLIPProcessor, CLIPModel
 
 from numpy.typing import NDArray
-from numpy import uint8, concatenate
+from numpy import generic, concatenate
 
 from .prompt_handler import split_prompt_message
 from .image_processor import get_captcha_fields, split_image_into_tiles, create_image_grid
@@ -37,7 +37,7 @@ class YoloDetector:
         self.model = YOLO("yolov8m-seg.pt")
         self.yolo_classes = list(self.model.names.values())
 
-    def get_tiles_in_bounding_box(self, img: NDArray[uint8], tile_amount: int, point_start: Tuple[int, int], point_end: Tuple[int, int]) -> List[bool]:
+    def get_tiles_in_bounding_box(self, img: NDArray[generic], tile_amount: int, point_start: Tuple[int, int], point_end: Tuple[int, int]) -> List[bool]:
         tiles_in_bbox = []
         # Define the size of the original image
         height, width, _ = img.shape
@@ -77,7 +77,7 @@ class YoloDetector:
 
         return tiles_in_bbox
 
-    def detect_image(self, image: NDArray[uint8], tile_amount: int, task_type: str) -> List[bool]:
+    def detect_image(self, image: NDArray[generic], tile_amount: int, task_type: str) -> List[bool]:
         response = [False for _ in range(tile_amount)]
         height, width, _ = image.shape
         tiles_per_row = int(math.sqrt(tile_amount))
@@ -172,7 +172,7 @@ class ClipDetector:
         self.vit_model = CLIPModel.from_pretrained("openai/clip-vit-base-patch32")
         self.vit_processor = CLIPProcessor.from_pretrained("openai/clip-vit-base-patch32")
 
-    def detect_vit(self, images: List[NDArray[uint8]], task_type: str, area_captcha: Optional[bool] = False) -> List[bool]:
+    def detect_vit(self, images: List[NDArray[generic]], task_type: str, area_captcha: Optional[bool] = False) -> List[bool]:
         response = []
         # labels = self.all_labels if not area_captcha else self.area_captcha_labels[task_type]
         labels = self.area_captcha_labels[task_type] if area_captcha else self.all_labels
@@ -199,7 +199,7 @@ class ClipDetector:
 
         return response
 
-    def detect_image(self, images: List[NDArray[uint8]], task_type: str) -> List[bool]:
+    def detect_image(self, images: List[NDArray[generic]], task_type: str) -> List[bool]:
         if len(images) == 9:
             return self.detect_vit(images, task_type, area_captcha=False)
 
@@ -304,7 +304,7 @@ class Detector:
 
         return images, coords
 
-    def handle_multiple_images(self, images: List[bytes]) -> List[NDArray[uint8]]:
+    def handle_multiple_images(self, images: List[bytes]) -> List[NDArray[generic]]:
         cv2_images = []
         for image in images:
             try:
