@@ -1,8 +1,3 @@
-# -*- coding: utf-8 -*-
-# Author     : Vinyzu
-# GitHub     : https://github.com/Vinyzu
-# Description:
-
 BAD_CODE = {
     "а": "a",
     "е": "e",
@@ -20,12 +15,14 @@ BAD_CODE = {
     "х": "x",
 }
 
+
 def label_cleaning(raw_label: str) -> str:
     """cleaning errors-unicode"""
     clean_label = raw_label
     for c in BAD_CODE:
         clean_label = clean_label.replace(c, BAD_CODE[c])
     return clean_label
+
 
 def split_prompt_message(label: str) -> str:
     """Detach label from challenge prompt"""

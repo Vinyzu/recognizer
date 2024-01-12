@@ -1,15 +1,9 @@
-# -*- coding: utf-8 -*-
-# Author     : Vinyzu
-# GitHub     : https://github.com/Vinyzu
-# Description:
 from __future__ import annotations
 
 import asyncio
-from pathlib import Path
 
-from loguru import logger
-from playwright.async_api import Page as AsyncPage, async_playwright
-from recaptcha_challenger.agents.playwright import AsyncChallenger
+from playwright.async_api import async_playwright
+from recognizer.agents.playwright import AsyncChallenger
 
 
 async def bytedance():
