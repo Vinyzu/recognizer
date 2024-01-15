@@ -1,7 +1,7 @@
 setuptools~=69.0.3
 opencv-python~=4.9.0.80
 imageio~=2.33.1
-ultralytics~=8.1.0
+ultralytics~=8.1.1
 transformers~=4.36.2
 numpy~=1.26.3
 playwright~=1.40.0
