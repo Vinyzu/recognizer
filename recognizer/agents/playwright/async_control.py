@@ -9,11 +9,21 @@ from playwright.async_api import Page, FrameLocator, Request, TimeoutError
 
 
 class AsyncChallenger:
-    def __init__(self, page: Page, click_timeout: Optional[int] = None) -> None:
+    def __init__(self, page: Page, click_timeout: Optional[int] = None, retry_times: Optional[int] = 15) -> None:
+        """
+        Initialize a reCognizer AsyncChallenger instance with specified configurations.
+
+        Args:
+            page (Page): The Playwright Page to initialize on.
+            click_timeout (int, optional): Click Timeouts between captcha-clicks.
+            retry_times (int, optional): Maximum amount of retries before raising an Exception. Defaults to 15.
+        """
         self.page = page
         self.detector = Detector()
 
         self.click_timeout = click_timeout
+        self.retry_times = retry_times
+        self.retried = 0
         self.dynamic = False
 
         self.page.on('request', self.request_handler)
@@ -67,8 +77,9 @@ class AsyncChallenger:
         return True
 
     async def retry(self, captcha_frame, verify=False) -> Union[str, bool]:
-        if not verify:
-            print("[INFO] Reloading Captcha and Retrying")
+        self.retried += 1
+        if self.retried >= self.retry_times:
+            raise RecursionError(f"Exceeded maximum retry times of {self.retry_times}")
 
         # Resetting Values
         self.dynamic = False
@@ -76,6 +87,7 @@ class AsyncChallenger:
         if verify:
             reload_button = captcha_frame.locator("#recaptcha-verify-button")
         else:
+            print("[INFO] Reloading Captcha and Retrying")
             reload_button = captcha_frame.locator("#recaptcha-reload-button")
         await reload_button.click()
         return await self.handle_recaptcha()
@@ -127,9 +139,22 @@ class AsyncChallenger:
             return captcha_token
         else:
             # Retrying
+            self.retried += 1
+            if self.retried >= self.retry_times:
+                raise RecursionError(f"Exceeded maximum retry times of {self.retry_times}")
+
             return await self.handle_recaptcha()
 
     async def solve_recaptcha(self) -> Union[str, bool]:
+        """
+        Solve a hcaptcha-challenge on the specified Playwright Page
+
+        Returns:
+            str/bool: The result of the challenge
+        Raises:
+            RecursionError: If the challenger doesn´t succeed in the given retry times
+        """
+
         # Resetting Values
         if not await self.click_checkbox():
             return False

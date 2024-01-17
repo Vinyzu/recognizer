@@ -259,6 +259,9 @@ class Detector:
     }
 
     def __init__(self) -> None:
+        """
+        Spawn a new reCognizer Detector Instance
+        """
         self.yolo_detector = YoloDetector()
         self.clip_detector = ClipDetector()
 
@@ -320,6 +323,17 @@ class Detector:
         return cv2_images
 
     def detect(self, prompt: str, images: Union[Path, bytes, List[Path], List[bytes]], area_captcha: Optional[bool] = None) -> Tuple[List[bool], List[Tuple[int, int]]]:
+        """
+        Create a new Botright browser instance with specified configurations.
+
+        Args:
+            prompt (str): Proxy server URL to use for the browser. Defaults to None.
+            images (Path | bytes | List[Path] | List[bytes]): Proxy server URL to use for the browser. Defaults to None.
+            area_captcha (bool, optional): Proxy server URL to use for the browser. Defaults to None.
+
+        Returns:
+            List[bool], List[Tuple[int, int]]: The reCognizer Response and calculated click-coordinates for the response
+        """
         response = []
         coordinates: List[Tuple[int, int]] = []
         # Making best guess if its area_captcha if user did not specify

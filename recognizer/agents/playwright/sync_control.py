@@ -10,6 +10,14 @@ from playwright.sync_api import Page, FrameLocator, Request, TimeoutError
 
 class SyncChallenger:
     def __init__(self, page: Page, click_timeout: Optional[int] = None) -> None:
+        """
+        Initialize a reCognizer AsyncChallenger instance with specified configurations.
+
+        Args:
+            page (Page): The Playwright Page to initialize on.
+            click_timeout (int, optional): Click Timeouts between captcha-clicks.
+            retry_times (int, optional): Maximum amount of retries before raising an Exception. Defaults to 15.
+        """
         self.page = page
         self.detector = Detector()
 
@@ -130,6 +138,14 @@ class SyncChallenger:
             return self.handle_recaptcha()
 
     def solve_recaptcha(self) -> Union[str, bool]:
+        """
+        Solve a hcaptcha-challenge on the specified Playwright Page
+
+        Returns:
+            str/bool: The result of the challenge
+        Raises:
+            RecursionError: If the challenger doesn´t succeed in the given retry times
+        """
         # Resetting Values
         if not self.click_checkbox():
             return False
