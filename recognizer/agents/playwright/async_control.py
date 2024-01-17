@@ -9,7 +9,7 @@ from playwright.async_api import Page, FrameLocator, Request, TimeoutError
 
 
 class AsyncChallenger:
-    def __init__(self, page: Page, click_timeout: Optional[int] = None, retry_times: Optional[int] = 15) -> None:
+    def __init__(self, page: Page, click_timeout: Optional[int] = None, retry_times: int = 15) -> None:
         """
         Initialize a reCognizer AsyncChallenger instance with specified configurations.
 

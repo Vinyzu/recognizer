@@ -16,17 +16,23 @@ pip install recognizer
 ## Basic Usage
 
 ```py
+# Only for Type-Hints
+from typing import TypeVar, Sequence, Union
 from pathlib import Path
+from os import PathLike
 
+accepted_image_types = TypeVar("accepted_image_types", Path, Union[PathLike[str], str], bytes, Sequence[Path], Sequence[Union[PathLike[str], str]], Sequence[bytes])
+
+# Real Code
 from recognizer import Detector
 
 detector = Detector()
 
 task_type: str = "bicycle"
-images = Path("recaptcha_image.png").read_bytes()
+images: accepted_image_types = "recaptcha_image.png"
 area_captcha: bool = False
 
-response, coordinates = detector.detect("task_type", images, area_captcha=area_captcha)
+response, coordinates = detector.detect(task_type, images, area_captcha=area_captcha)
 ```
 
 ---

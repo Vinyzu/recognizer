@@ -9,7 +9,7 @@ from playwright.sync_api import Page, FrameLocator, Request, TimeoutError
 
 
 class SyncChallenger:
-    def __init__(self, page: Page, click_timeout: Optional[int] = None) -> None:
+    def __init__(self, page: Page, click_timeout: Optional[int] = None, retry_times: int = 15) -> None:
         """
         Initialize a reCognizer AsyncChallenger instance with specified configurations.
 
@@ -22,6 +22,8 @@ class SyncChallenger:
         self.detector = Detector()
 
         self.click_timeout = click_timeout
+        self.retry_times = retry_times
+        self.retried = 0
         self.dynamic = False
 
         self.page.on('request', self.request_handler)
@@ -75,8 +77,9 @@ class SyncChallenger:
         return True
 
     def retry(self, captcha_frame, verify=False) -> Union[str, bool]:
-        if not verify:
-            print("[INFO] Reloading Captcha and Retrying")
+        self.retried += 1
+        if self.retried >= self.retry_times:
+            raise RecursionError(f"Exceeded maximum retry times of {self.retry_times}")
 
         # Resetting Values
         self.dynamic = False
@@ -84,6 +87,7 @@ class SyncChallenger:
         if verify:
             reload_button = captcha_frame.locator("#recaptcha-verify-button")
         else:
+            print("[INFO] Reloading Captcha and Retrying")
             reload_button = captcha_frame.locator("#recaptcha-reload-button")
         reload_button.click()
         return self.handle_recaptcha()
@@ -135,6 +139,10 @@ class SyncChallenger:
             return captcha_token
         else:
             # Retrying
+            self.retried += 1
+            if self.retried >= self.retry_times:
+                raise RecursionError(f"Exceeded maximum retry times of {self.retry_times}")
+
             return self.handle_recaptcha()
 
     def solve_recaptcha(self) -> Union[str, bool]:

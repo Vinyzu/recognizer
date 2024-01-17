@@ -4,8 +4,9 @@ import base64
 import binascii
 import math
 import random
+from os import PathLike
 from pathlib import Path
-from typing import List, Tuple, Union, Optional
+from typing import List, Tuple, Union, Optional, Sequence
 from contextlib import suppress
 
 import cv2
@@ -322,14 +323,15 @@ class Detector:
 
         return cv2_images
 
-    def detect(self, prompt: str, images: Union[Path, bytes, List[Path], List[bytes]], area_captcha: Optional[bool] = None) -> Tuple[List[bool], List[Tuple[int, int]]]:
+    def detect(self, prompt: str, images: Union[Path, Union[PathLike[str], str], bytes, Sequence[Path], Sequence[Union[PathLike[str], str]], Sequence[bytes]],
+               area_captcha: Optional[bool] = None) -> Tuple[List[bool], List[Tuple[int, int]]]:
         """
         Create a new Botright browser instance with specified configurations.
 
         Args:
-            prompt (str): Proxy server URL to use for the browser. Defaults to None.
-            images (Path | bytes | List[Path] | List[bytes]): Proxy server URL to use for the browser. Defaults to None.
-            area_captcha (bool, optional): Proxy server URL to use for the browser. Defaults to None.
+            prompt (str): The prompt name/sentence of the captcha (e.g. "Select all images with crosswalks" / "crosswalk").
+            images (Path | PathLike | bytes | Sequence[Path] | Sequence[PathLike] | Sequence[bytes]): The Image(s) to reCognize.
+            area_captcha (bool, optional): Whether the Captcha Task is an area-captcha.
 
         Returns:
             List[bool], List[Tuple[int, int]]: The reCognizer Response and calculated click-coordinates for the response
@@ -346,14 +348,29 @@ class Detector:
         label = self.challenge_alias[label]
 
         # Image Splitting if Image-Bytes is provided, not list of Images
+        if isinstance(images, (PathLike, str)):
+            images = Path(images)
+
         if isinstance(images, bytes) or isinstance(images, Path):
             images, coordinates = self.handle_single_image(images, area_captcha)  # type: ignore
 
         if isinstance(images, list):
             if len(images) == 1:
-                byte_images, coordinates = self.handle_single_image(images[0], area_captcha)
+                if isinstance(images[0], (PathLike, str)):
+                    pathed_image = Path(images[0])
+                    byte_images, coordinates = self.handle_single_image(pathed_image, area_captcha)
+                else:
+                    byte_images, coordinates = self.handle_single_image(images[0], area_captcha)
             else:
-                byte_images = [img.read_bytes() if isinstance(img, Path) else img for img in images]
+                byte_images = []
+                for image in images:
+                    if isinstance(image, Path):
+                        byte_images.append(image.read_bytes())
+                    elif isinstance(image, (PathLike, str)):
+                        pathed_image = Path(image)
+                        byte_images.append(pathed_image.read_bytes())
+                    else:
+                        byte_images.append(image)
 
             if len(byte_images) not in (9, 16):
                 print(f"[ERROR] Images amount must equal 9 or 16. Is: {len(byte_images)}")
