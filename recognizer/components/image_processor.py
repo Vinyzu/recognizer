@@ -1,14 +1,23 @@
 from __future__ import annotations
 
+import base64
+import binascii
 import math
-from typing import List, Tuple
+from statistics import median
+from contextlib import suppress
+from pathlib import Path
+from typing import List, Tuple, Union
 
 import cv2
 from numpy.typing import NDArray
 from numpy import generic, concatenate
+from imageio.v2 import imread
+
+from .detection_processor import calculate_approximated_coords
 
 
 def get_captcha_fields(img: NDArray[generic]) -> Tuple[List[bytes], List[Tuple[int, int]]]:
+    captcha_fields_with_sizes: List[Tuple[bytes, int, int, int]] = []
     captcha_fields: List[Tuple[bytes, int, int]] = []
 
     # Turn image to grayscale and Apply a white threshold to it
@@ -36,9 +45,20 @@ def get_captcha_fields(img: NDArray[generic]) -> Tuple[List[bytes], List[Tuple[i
                 crop_img = img[y:y+h, x:x+w]
                 # Cv2 to Image Bytes
                 image_bytes = cv2.imencode('.jpg', crop_img)[1].tobytes()
+                image_size: int = w*h
                 # Getting Center of Captcha Field
                 center_x, center_y = x+(w//2), y+(h//2)
+                captcha_fields_with_sizes.append((image_bytes, center_x, center_y, image_size))
+
+    if len(captcha_fields_with_sizes) >= 9:
+        # Dont use captcha fields that are too big
+        size_median = median([sizes[3] for sizes in captcha_fields_with_sizes])
+        for i, (image_bytes, center_x, center_y, image_size) in enumerate(captcha_fields_with_sizes):
+            if int(image_size) == int(size_median):
                 captcha_fields.append((image_bytes, center_x, center_y))
+    else:
+        for (image_bytes, center_x, center_y, image_size) in captcha_fields_with_sizes:
+            captcha_fields.append((image_bytes, center_x, center_y))
 
     sorted_captcha_fields: List[Tuple[bytes, int, int]] = sorted(captcha_fields, key=lambda element: [element[2], element[1]])
     # return sorted_captcha_fields
@@ -89,3 +109,47 @@ def create_image_grid(images: List[NDArray[generic]]) -> NDArray[generic]:
     combined_img = concatenate(layers, axis=0)
 
     return combined_img
+
+
+def handle_single_image(single_image: Union[Path, bytes], area_captcha: bool) -> Tuple[List[bytes], List[Tuple[int, int]]]:
+    if isinstance(single_image, bytes):
+        with suppress(binascii.Error):
+            single_image = base64.b64decode(single_image, validate=True)
+
+    # Image Bytes to Cv2
+    rgba_img = imread(single_image)
+    img = cv2.cvtColor(rgba_img, cv2.COLOR_BGR2RGB)
+
+    # Image Splitting Presuming has white barriers
+    images, coords = get_captcha_fields(img)
+
+    if len(images) == 1:
+        # Turning bytes from get_captcha_fields back to Cv2
+        rgba_img = imread(images[0])
+        img = cv2.cvtColor(rgba_img, cv2.COLOR_BGR2RGB)
+
+        # Either it is just a single image or no white barriers
+        height, width, _ = img.shape
+
+        if height > 200 and width > 200:
+            tiles_amount = 4 if area_captcha else 3
+            images = split_image_into_tiles(img, tiles_amount)
+            coords = calculate_approximated_coords(height // tiles_amount, width // tiles_amount, tiles_amount)
+
+    return images, coords
+
+
+def handle_multiple_images(images: List[bytes]) -> List[NDArray[generic]]:
+    cv2_images = []
+    for image in images:
+        try:
+            byte_image = base64.b64decode(image, validate=True)
+        except binascii.Error:
+            byte_image = image
+
+        # Image Bytes to Cv2
+        rgba_img = imread(byte_image)
+        cv2_img = cv2.cvtColor(rgba_img, cv2.COLOR_BGR2RGB)
+        cv2_images.append(cv2_img)
+
+    return cv2_images

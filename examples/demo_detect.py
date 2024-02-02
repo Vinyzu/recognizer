@@ -44,23 +44,23 @@ if __name__ == '__main__':
     draw_coordinates(img_bytes, coordinates)
 
     # Area Detection
-    # print("-- AREA DETECTION --")
-    # img_bytes = image_dir.joinpath("only_captcha.png").read_bytes()
-    # response, coordinates = detector.detect("motorcycle", img_bytes, area_captcha=True)
-    # print(f"Path: [only_captcha.png], Task: [Motorcycle], Result: {response}; Coordinates: {coordinates}")
-    # draw_coordinates(img_bytes, coordinates)
-    #
-    # img_bytes = image_dir.joinpath("area_image.png").read_bytes()
-    # response, coordinates = detector.detect("fire hydrant", img_bytes, area_captcha=True)
-    # print(f"Path: [area_image.png], Task: [Fire Hydrant], Result: {response}; Coordinates: {coordinates}")
-    # draw_coordinates(img_bytes, coordinates)
-    #
-    # img_bytes = image_dir.joinpath("area_no_yolo.png").read_bytes()
-    # response, coordinates = detector.detect("chimney", img_bytes, area_captcha=True)
-    # print(f"Path: [area_no_yolo.png], Task: [Chimney], Result: {response}; Coordinates: {coordinates}")
-    # draw_coordinates(img_bytes, coordinates)
-    #
-    # img_bytes = image_dir.joinpath("area_no_yolo1.png").read_bytes()
-    # response, coordinates = detector.detect("crosswalks", img_bytes, area_captcha=True)
-    # print(f"Path: [area_no_yolo.png], Task: [Crosswalks], Result: {response}; Coordinates: {coordinates}")
-    # draw_coordinates(img_bytes, coordinates)
+    print("-- AREA DETECTION --")
+    img_bytes = image_dir.joinpath("only_captcha.png").read_bytes()
+    response, coordinates = detector.detect("motorcycle", img_bytes, area_captcha=True)
+    print(f"Path: [only_captcha.png], Task: [Motorcycle], Result: {response}; Coordinates: {coordinates}")
+    draw_coordinates(img_bytes, coordinates)
+
+    img_bytes = image_dir.joinpath("area_image.png").read_bytes()
+    response, coordinates = detector.detect("fire hydrant", img_bytes, area_captcha=True)
+    print(f"Path: [area_image.png], Task: [Fire Hydrant], Result: {response}; Coordinates: {coordinates}")
+    draw_coordinates(img_bytes, coordinates)
+
+    img_bytes = image_dir.joinpath("area_no_yolo.png").read_bytes()
+    response, coordinates = detector.detect("chimney", img_bytes, area_captcha=True)
+    print(f"Path: [area_no_yolo.png], Task: [Chimney], Result: {response}; Coordinates: {coordinates}")
+    draw_coordinates(img_bytes, coordinates)
+
+    img_bytes = image_dir.joinpath("area_no_yolo1.png").read_bytes()
+    response, coordinates = detector.detect("crosswalks", img_bytes, area_captcha=True)
+    print(f"Path: [area_no_yolo.png], Task: [Crosswalks], Result: {response}; Coordinates: {coordinates}")
+    draw_coordinates(img_bytes, coordinates)

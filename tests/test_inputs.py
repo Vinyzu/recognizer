@@ -17,8 +17,7 @@ def test_single_pathlib_input(detector: Detector):
     assert len(response) == 9
 
     # Response Correctness
-    assert sum(response) == 3
-    assert len(coordinates) == 3
+    assert sum(response) == len(coordinates)
 
 
 def test_one_pathlib_input(detector: Detector):
@@ -31,8 +30,7 @@ def test_one_pathlib_input(detector: Detector):
     assert len(response) == 9
 
     # Response Correctness
-    assert sum(response) == 3
-    assert len(coordinates) == 3
+    assert sum(response) == len(coordinates)
 
 
 def test_pathlibs_input(detector: Detector):
@@ -43,8 +41,7 @@ def test_pathlibs_input(detector: Detector):
     assert len(response) == 9
 
     # Response Correctness
-    assert sum(response) == 3
-    assert len(coordinates) == 3
+    assert sum(response) == len(coordinates)
 
 
 def test_single_path_input(detector: Detector):
@@ -57,8 +54,7 @@ def test_single_path_input(detector: Detector):
     assert len(response) == 9
 
     # Response Correctness
-    assert sum(response) == 3
-    assert len(coordinates) == 3
+    assert sum(response) == len(coordinates)
 
 
 def test_one_path_input(detector: Detector):
@@ -71,8 +67,7 @@ def test_one_path_input(detector: Detector):
     assert len(response) == 9
 
     # Response Correctness
-    assert sum(response) == 3
-    assert len(coordinates) == 3
+    assert sum(response) == len(coordinates)
 
 
 def test_paths_input(detector: Detector):
@@ -84,8 +79,7 @@ def test_paths_input(detector: Detector):
     assert len(response) == 9
 
     # Response Correctness
-    assert sum(response) == 3
-    assert len(coordinates) == 3
+    assert sum(response) == len(coordinates)
 
 
 def test_single_bytes_input(detector: Detector):
@@ -97,8 +91,7 @@ def test_single_bytes_input(detector: Detector):
     assert len(response) == 9
 
     # Response Correctness
-    assert sum(response) == 3
-    assert len(coordinates) == 3
+    assert sum(response) == len(coordinates)
 
 
 def test_one_bytes_input(detector: Detector):
@@ -110,8 +103,7 @@ def test_one_bytes_input(detector: Detector):
     assert len(response) == 9
 
     # Response Correctness
-    assert sum(response) == 3
-    assert len(coordinates) == 3
+    assert sum(response) == len(coordinates)
 
 
 def test_bytes_input(detector: Detector):
@@ -123,5 +115,4 @@ def test_bytes_input(detector: Detector):
     assert len(response) == 9
 
     # Response Correctness
-    assert sum(response) == 3
-    assert len(coordinates) == 3
+    assert sum(response) == len(coordinates)

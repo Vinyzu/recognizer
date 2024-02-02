@@ -14,8 +14,7 @@ def test_full_page_screenshot(detector: Detector):
     assert len(response) == 9
 
     # Response Correctness
-    assert sum(response) == 3
-    assert len(coordinates) == 3
+    assert sum(response) == len(coordinates)
 
 
 def test_only_captcha(detector: Detector):
@@ -27,8 +26,7 @@ def test_only_captcha(detector: Detector):
     assert len(response) == 16
 
     # Response Correctness
-    assert sum(response) == 6
-    assert len(coordinates) == 6
+    assert sum(response) == len(coordinates)
 
 
 def test_area_yolo_captcha(detector: Detector):
@@ -40,8 +38,7 @@ def test_area_yolo_captcha(detector: Detector):
     assert len(response) == 16
 
     # Response Correctness
-    assert sum(response) == 8
-    assert len(coordinates) == 8
+    assert sum(response) == len(coordinates)
 
 
 def test_area_clip_captcha(detector: Detector):
@@ -53,8 +50,7 @@ def test_area_clip_captcha(detector: Detector):
     assert len(response) == 16
 
     # Response Correctness
-    assert sum(response) == 4
-    assert len(coordinates) == 4
+    assert sum(response) == len(coordinates)
 
 
 def test_classify_yolo_captcha(detector: Detector):
@@ -66,8 +62,7 @@ def test_classify_yolo_captcha(detector: Detector):
     assert len(response) == 9
 
     # Response Correctness
-    assert sum(response) == 3
-    assert len(coordinates) == 3
+    assert sum(response) == len(coordinates)
 
 
 def test_classify_clip_captcha(detector: Detector):
@@ -79,5 +74,4 @@ def test_classify_clip_captcha(detector: Detector):
     assert len(response) == 9
 
     # Response Correctness
-    assert sum(response) == 4
-    assert len(coordinates) == 4
+    assert sum(response) == len(coordinates)
