@@ -29,7 +29,7 @@ def sync_page() -> Generator[SyncPage, None, None]:
 @pytest_asyncio.fixture
 async def async_page() -> AsyncGenerator[AsyncPage, None]:
     async with async_playwright() as p:
-        browser = await p.chromium.launch(headless=False)
+        browser = await p.chromium.launch(headless=True)
         context = await browser.new_context(locale="en-US")
         page = await context.new_page()
 
