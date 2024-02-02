@@ -6,7 +6,7 @@ from typing import Optional, Union
 
 from recognizer import Detector
 
-from playwright.sync_api import Page, FrameLocator, Request, TimeoutError, Error as PlaywrightError, Error as PlaywrightError
+from playwright.sync_api import Page, FrameLocator, Request, TimeoutError, Error as PlaywrightError
 
 
 class SyncChallenger:
@@ -25,7 +25,6 @@ class SyncChallenger:
         self.click_timeout = click_timeout
         self.retry_times = retry_times
         self.retried = 0
-        self.dynamic = False
         self.dynamic: bool = False
         self.captcha_token: str = ""
 
