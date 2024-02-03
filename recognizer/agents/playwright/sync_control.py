@@ -148,6 +148,10 @@ class SyncChallenger:
                 self.page.wait_for_timeout(5000)
                 not_yet_passed = self.detect_tiles(prompt, area_captcha, True, captcha_frame)
 
+        # Check if returned captcha_token (str)
+        if isinstance(not_yet_passed, str):
+            return not_yet_passed
+
         # Resetting value if challenge fails
         # Submit challenge
         try:
