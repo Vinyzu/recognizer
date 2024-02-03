@@ -28,6 +28,7 @@ jobs:
         path: "requirements-test.txt"
     - name: Install Chrome Browser
       uses: browser-actions/setup-chrome@v1
+    - name: Install Chromium Driver
       run: python -m playwright install chromium
     - name: Test with PyTest
       run: pytest
