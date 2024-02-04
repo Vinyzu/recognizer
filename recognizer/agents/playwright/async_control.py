@@ -1,6 +1,7 @@
 from __future__ import annotations
 
 import re
+import time
 from contextlib import suppress
 from typing import Optional, Union
 
@@ -28,6 +29,7 @@ class AsyncChallenger:
         self.retried = 0
         self.dynamic: bool = False
         self.captcha_token: str = ""
+        self.start_timestamp: float = 0
 
         self.page.on("request", self.request_handler)
 
@@ -96,14 +98,19 @@ class AsyncChallenger:
 
         return True
 
-    async def retry(self, captcha_frame, verify=False) -> Union[str, bool]:
+    def check_retry(self):
         self.retried += 1
         if self.retried >= self.retry_times:
             raise RecursionError(f"Exceeded maximum retry times of {self.retry_times}")
 
+    async def retry(self, captcha_frame, verify=False) -> Union[str, bool]:
+        # Retrying
+        self.check_retry()
+
         # Resetting Values
         self.dynamic = False
         self.captcha_token = ""
+        self.start_timestamp = time.time()
 
         # Clicking Reload Button
         if verify:
@@ -128,6 +135,14 @@ class AsyncChallenger:
             # Checking if Captcha Token is available
             if captcha_token := await self.check_result():
                 return captcha_token
+            elif (time.time() - self.start_timestamp) > 120:
+                # reCaptcha Timed Out
+                if await self.click_checkbox():
+                    # Retrying
+                    self.check_retry()
+                    return await self.handle_recaptcha()
+                else:
+                    raise RecursionError("Invisible reCaptcha Timed Out.")
 
             print("[ERROR] reCaptcha Frame did not load.")
             return False
@@ -172,10 +187,7 @@ class AsyncChallenger:
             await self.page.wait_for_timeout(1000)
 
         # Retrying
-        self.retried += 1
-        if self.retried >= self.retry_times:
-            raise RecursionError(f"Exceeded maximum retry times of {self.retry_times}")
-
+        self.check_retry()
         return await self.handle_recaptcha()
 
     async def solve_recaptcha(self) -> Union[str, bool]:
@@ -190,6 +202,7 @@ class AsyncChallenger:
         # Resetting Values
         self.dynamic = False
         self.captcha_token = ""
+        self.start_timestamp = time.time()
 
         await self.click_checkbox()
         if not await self.check_captcha_visible():
