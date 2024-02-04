@@ -62,8 +62,8 @@ class AsyncChallenger:
 
     async def check_captcha_visible(self):
         captcha_frame = self.page.frame_locator("//iframe[contains(@src,'bframe')]")
-        image_captcha = captcha_frame.locator("[id='rc-imageselect']")
-        return await image_captcha.is_visible(timeout=15000)
+        label_obj = captcha_frame.locator("//strong")
+        return await label_obj.is_visible()
 
     async def click_checkbox(self) -> bool:
         # Clicking Captcha Checkbox
@@ -187,10 +187,10 @@ class AsyncChallenger:
         self.dynamic = False
         self.captcha_token = ""
 
-        if not await self.click_checkbox():
-            if not await self.check_captcha_visible():
-                print("[ERROR] Could not click reCaptcha Checkbox.")
-                return False
+        await self.click_checkbox()
+        if not await self.check_captcha_visible():
+            print("[ERROR] Could not click reCaptcha Challenge is not visible.")
+            return False
 
         await self.page.wait_for_timeout(2000)
         return await self.handle_recaptcha()

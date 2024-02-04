@@ -62,8 +62,8 @@ class SyncChallenger:
 
     def check_captcha_visible(self):
         captcha_frame = self.page.frame_locator("//iframe[contains(@src,'bframe')]")
-        image_captcha = captcha_frame.locator("[id='rc-imageselect']")
-        return image_captcha.is_visible(timeout=15000)
+        label_obj = captcha_frame.locator("//strong")
+        return label_obj.is_visible()
 
     def click_checkbox(self) -> bool:
         # Clicking Captcha Checkbox
@@ -189,10 +189,10 @@ class SyncChallenger:
         self.dynamic = False
         self.captcha_token = ""
 
-        if not self.click_checkbox():
-            if not self.check_captcha_visible():
-                print("[ERROR] Could not click reCaptcha Checkbox.")
-                return False
+        self.click_checkbox()
+        if not self.check_captcha_visible():
+            print("[ERROR] Could not click reCaptcha Challenge is not visible.")
+            return False
 
         self.page.wait_for_timeout(2000)
         return self.handle_recaptcha()
