@@ -63,7 +63,7 @@ class SyncChallenger:
     def check_captcha_visible(self):
         captcha_frame = self.page.frame_locator("//iframe[contains(@src,'bframe')]")
         image_captcha = captcha_frame.locator("[id='rc-imageselect']")
-        return image_captcha.is_visible(timeout=5000)
+        return image_captcha.is_visible(timeout=15000)
 
     def click_checkbox(self) -> bool:
         # Clicking Captcha Checkbox

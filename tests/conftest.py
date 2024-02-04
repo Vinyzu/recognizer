@@ -1,12 +1,12 @@
 from typing import AsyncGenerator, Generator
 
-import botright
 import pytest
 import pytest_asyncio
 
+import botright
+from botright.extended_typing import Page as BotrightPage, BrowserContext as BotrightBrowser
 from playwright.async_api import async_playwright, Page as AsyncPage
 from playwright.sync_api import sync_playwright, Page as SyncPage
-from botright.extended_typing import Page as BotrightPage, BrowserContext as BotrightBrowser
 from recognizer import Detector
 
 
@@ -45,7 +45,7 @@ async def botright_client():
 
 @pytest_asyncio.fixture
 async def browser(botright_client, **launch_arguments) -> BotrightBrowser:
-    browser = await botright_client.new_browser(timeout=15000, **launch_arguments)
+    browser = await botright_client.new_browser(**launch_arguments)
     yield browser
     await browser.close()
 

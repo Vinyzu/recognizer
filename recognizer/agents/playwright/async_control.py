@@ -63,7 +63,7 @@ class AsyncChallenger:
     async def check_captcha_visible(self):
         captcha_frame = self.page.frame_locator("//iframe[contains(@src,'bframe')]")
         image_captcha = captcha_frame.locator("[id='rc-imageselect']")
-        return await image_captcha.is_visible(timeout=5000)
+        return await image_captcha.is_visible(timeout=15000)
 
     async def click_checkbox(self) -> bool:
         # Clicking Captcha Checkbox
