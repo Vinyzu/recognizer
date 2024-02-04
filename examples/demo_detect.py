@@ -1,11 +1,10 @@
 from pathlib import Path
 
-from numpy.typing import NDArray
-from numpy import generic
-
 import cv2
-from imageio.v2 import imread
 import matplotlib.pyplot as plt
+from imageio.v2 import imread
+from numpy import generic
+from numpy.typing import NDArray
 
 from recognizer import Detector
 
@@ -16,14 +15,14 @@ show_results = True
 def draw_coordinates(img_bytes, coordinates):
     if show_results:
         image: NDArray[generic] = imread(img_bytes)
-        for (x, y) in coordinates:
+        for x, y in coordinates:
             image = cv2.circle(image, (x, y), radius=5, color=(0, 0, 255), thickness=-1)
 
         plt.imshow(image)
         plt.show()
 
 
-if __name__ == '__main__':
+if __name__ == "__main__":
     detector = Detector()
 
     # Classification

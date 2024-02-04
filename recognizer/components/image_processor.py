@@ -3,15 +3,15 @@ from __future__ import annotations
 import base64
 import binascii
 import math
-from statistics import median
 from contextlib import suppress
 from pathlib import Path
+from statistics import median
 from typing import List, Tuple, Union
 
 import cv2
-from numpy.typing import NDArray
-from numpy import generic, concatenate
 from imageio.v2 import imread
+from numpy import concatenate, generic
+from numpy.typing import NDArray
 
 from .detection_processor import calculate_approximated_coords
 
@@ -42,12 +42,12 @@ def get_captcha_fields(img: NDArray[generic]) -> Tuple[List[bytes], List[Tuple[i
 
             if 0.95 <= aspectRatio <= 1.05:
                 # Cropping Image area to Captcha Field
-                crop_img = img[y:y+h, x:x+w]
+                crop_img = img[y:y+h, x:x+w]  # fmt: skip
                 # Cv2 to Image Bytes
-                image_bytes = cv2.imencode('.jpg', crop_img)[1].tobytes()
-                image_size: int = w*h
+                image_bytes = cv2.imencode(".jpg", crop_img)[1].tobytes()
+                image_size: int = w * h
                 # Getting Center of Captcha Field
-                center_x, center_y = x+(w//2), y+(h//2)
+                center_x, center_y = x + (w // 2), y + (h // 2)
                 captcha_fields_with_sizes.append((image_bytes, center_x, center_y, image_size))
 
     if len(captcha_fields_with_sizes) >= 9:
@@ -57,14 +57,14 @@ def get_captcha_fields(img: NDArray[generic]) -> Tuple[List[bytes], List[Tuple[i
             if int(image_size) == int(size_median):
                 captcha_fields.append((image_bytes, center_x, center_y))
     else:
-        for (image_bytes, center_x, center_y, image_size) in captcha_fields_with_sizes:
+        for image_bytes, center_x, center_y, image_size in captcha_fields_with_sizes:
             captcha_fields.append((image_bytes, center_x, center_y))
 
     sorted_captcha_fields: List[Tuple[bytes, int, int]] = sorted(captcha_fields, key=lambda element: [element[2], element[1]])
     # return sorted_captcha_fields
     return (
         [field[0] for field in sorted_captcha_fields],
-        [(field[1], field[2]) for field in sorted_captcha_fields]
+        [(field[1], field[2]) for field in sorted_captcha_fields],
     )
 
 
@@ -88,7 +88,7 @@ def split_image_into_tiles(img: NDArray[generic], tile_count: int) -> List[bytes
 
             # Crop the image to create a tile
             tile = img[y_start:y_end, x_start:x_end]
-            image_bytes = cv2.imencode('.jpg', tile)[1].tobytes()
+            image_bytes = cv2.imencode(".jpg", tile)[1].tobytes()
             tiles.append(image_bytes)
 
     return tiles
@@ -101,7 +101,7 @@ def create_image_grid(images: List[NDArray[generic]]) -> NDArray[generic]:
     # Combining horizontal layers together
     layers = []
     for i in range(tile_count_per_row):
-        layer_images = [cv2_images[i*tile_count_per_row + j] for j in range(tile_count_per_row)]
+        layer_images = [cv2_images[i * tile_count_per_row + j] for j in range(tile_count_per_row)]
         layer = concatenate(layer_images, axis=1)
         layers.append(layer)
 

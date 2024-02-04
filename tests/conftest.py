@@ -1,12 +1,15 @@
 from typing import AsyncGenerator, Generator
 
+import botright
 import pytest
 import pytest_asyncio
+from botright.extended_typing import BrowserContext as BotrightBrowser
+from botright.extended_typing import Page as BotrightPage
+from playwright.async_api import Page as AsyncPage
+from playwright.async_api import async_playwright
+from playwright.sync_api import Page as SyncPage
+from playwright.sync_api import sync_playwright
 
-import botright
-from botright.extended_typing import Page as BotrightPage, BrowserContext as BotrightBrowser
-from playwright.async_api import async_playwright, Page as AsyncPage
-from playwright.sync_api import sync_playwright, Page as SyncPage
 from recognizer import Detector
 
 

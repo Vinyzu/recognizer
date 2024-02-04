@@ -3,6 +3,7 @@ from __future__ import annotations
 import asyncio
 
 from playwright.async_api import async_playwright
+
 from recognizer.agents.playwright import AsyncChallenger
 
 
@@ -17,6 +18,7 @@ async def bytedance():
 
         await page.goto("https://recaptcha-demo.appspot.com/recaptcha-v2-checkbox-explicit.php")
         await challenger.solve_recaptcha()
+
 
 if __name__ == "__main__":
     asyncio.run(bytedance())

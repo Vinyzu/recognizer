@@ -1,8 +1,8 @@
 import math
-from typing import Union, List, Tuple
+from typing import List, Tuple, Union
 
-from numpy.typing import NDArray
 from numpy import generic
+from numpy.typing import NDArray
 
 
 def calculate_segmentation_response(mask: Union[NDArray[generic], List[Tuple[int, int]]], response: List[bool], tile_width: int, tile_height: int, tiles_per_row: int) -> List[bool]:
@@ -26,10 +26,12 @@ def calculate_segmentation_response(mask: Union[NDArray[generic], List[Tuple[int
         boundary_y = tile_height * 0.05
 
         # Check if the point is within the 5% boundary of the tile area
+        # fmt: off
         within_boundary = (
                 boundary_x <= coord[1] % tile_width <= tile_width - boundary_x
                 and boundary_y <= coord[0] % tile_height <= tile_height - boundary_y
         )
+        # fmt: on
 
         if within_boundary:
             response[tile_index] = True

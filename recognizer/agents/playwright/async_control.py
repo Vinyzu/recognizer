@@ -4,9 +4,10 @@ import re
 from contextlib import suppress
 from typing import Optional, Union
 
-from recognizer import Detector
+from playwright.async_api import Error as PlaywrightError
+from playwright.async_api import FrameLocator, Page, Request, TimeoutError
 
-from playwright.async_api import Page, FrameLocator, Request, TimeoutError, Error as PlaywrightError
+from recognizer import Detector
 
 
 class AsyncChallenger:
@@ -32,8 +33,7 @@ class AsyncChallenger:
 
     async def request_handler(self, request: Request) -> None:
         # Check if Request url matches wanted
-        if ("google.com" not in request.url and "recaptcha.net" not in request.url) or\
-                ("reload" not in request.url and "userverify" not in request.url):
+        if ("google.com" not in request.url and "recaptcha.net" not in request.url) or ("reload" not in request.url and "userverify" not in request.url):
             return
 
         with suppress(Exception):
@@ -85,7 +85,7 @@ class AsyncChallenger:
             else:
                 return False
 
-        for (coord_x, coord_y) in coordinates:
+        for coord_x, coord_y in coordinates:
             await self.page.mouse.click(coord_x, coord_y)
             if self.click_timeout:
                 await self.page.wait_for_timeout(self.click_timeout)

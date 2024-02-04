@@ -3,6 +3,7 @@ from __future__ import annotations
 from contextlib import suppress
 
 from playwright.sync_api import Page
+
 from recognizer.agents.playwright import SyncChallenger
 
 

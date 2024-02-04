@@ -1,25 +1,23 @@
 from __future__ import annotations
 
-import warnings
 import math
 import random
+import warnings
+from concurrent.futures import ThreadPoolExecutor
 from os import PathLike
 from pathlib import Path
-from typing import List, Tuple, Union, Optional, Sequence
-from concurrent.futures import ThreadPoolExecutor
+from typing import List, Optional, Sequence, Tuple, Union
 
 import cv2
-from torch import set_num_threads, no_grad
-
-
-from numpy.typing import NDArray
 from numpy import generic, uint8
+from numpy.typing import NDArray
+from torch import no_grad, set_num_threads
 
+from .detection_processor import calculate_approximated_coords, calculate_segmentation_response, get_tiles_in_bounding_box
+from .image_processor import create_image_grid, handle_multiple_images, handle_single_image
 from .prompt_handler import split_prompt_message
-from .image_processor import create_image_grid, handle_single_image, handle_multiple_images
-from .detection_processor import calculate_segmentation_response, get_tiles_in_bounding_box, calculate_approximated_coords
 
-warnings.filterwarnings('ignore', category=UserWarning, message='TypedStorage is deprecated')
+warnings.filterwarnings("ignore", category=UserWarning, message="TypedStorage is deprecated")
 
 
 class DetectionModels:
@@ -41,7 +39,7 @@ class DetectionModels:
         self.yolo_model = YOLO("yolov8m-seg.pt")
 
     def _load_clip_detector(self):
-        from transformers import CLIPProcessor, CLIPModel, CLIPSegForImageSegmentation, CLIPSegProcessor
+        from transformers import CLIPModel, CLIPProcessor, CLIPSegForImageSegmentation, CLIPSegProcessor
 
         self.vit_model = CLIPModel.from_pretrained("flavour/CLIP-ViT-B-16-DataComp.XL-s13B-b90K")
         self.vit_processor = CLIPProcessor.from_pretrained("flavour/CLIP-ViT-B-16-DataComp.XL-s13B-b90K")
@@ -67,11 +65,13 @@ detection_models = DetectionModels()
 
 
 class YoloDetector:
+    # fmt: off
     yolo_classes = ['person', 'bicycle', 'car', 'motorcycle', 'airplane', 'bus', 'train', 'truck', 'boat', 'traffic light', 'fire hydrant', 'stop sign', 'parking meter', 'bench', 'bird', 'cat', 'dog',
                     'horse', 'sheep', 'cow', 'elephant', 'bear', 'zebra', 'giraffe', 'backpack', 'umbrella', 'handbag', 'tie', 'suitcase', 'frisbee', 'skis', 'snowboard', 'sports ball', 'kite',
                     'baseball bat', 'baseball glove', 'skateboard', 'surfboard', 'tennis racket', 'bottle', 'wine glass', 'cup', 'fork', 'knife', 'spoon', 'bowl', 'banana', 'apple', 'sandwich',
                     'orange', 'broccoli', 'carrot', 'hot dog', 'pizza', 'donut', 'cake', 'chair', 'couch', 'potted plant', 'bed', 'dining table', 'toilet', 'tv', 'laptop', 'mouse', 'remote',
                     'keyboard', 'cell phone', 'microwave', 'oven', 'toaster', 'sink', 'refrigerator', 'book', 'clock', 'vase', 'scissors', 'teddy bear', 'hair drier', 'toothbrush']
+    # fmt: on
 
     yolo_alias = {
         "bicycle": ["bicycle"],
@@ -119,6 +119,7 @@ class YoloDetector:
 
 
 class ClipDetector:
+    # fmt: off
     plain_labels = ["bicycle", "boat", "bus", "car", "fire hydrant", "motorcycle", "traffic light",  # YOLO TASKS
                     "bridge", "chimney", "crosswalk", "mountain", "palm tree", "stair", "tractor", "taxi"]
 
@@ -131,6 +132,7 @@ class ClipDetector:
                   "a concrete or steel or wooden stairway or stairs or steps with railings on its side in front of a house or building leading to the street",
                   "a tractor or agricultural vehicle driving on a street or field",
                   "a taxi or a yellow car"]
+    # fmt: on
 
     thresholds = {
         "bridge": 0.7285372716747225,
@@ -194,7 +196,7 @@ class ClipDetector:
         # Getting Tile Size from threshold mask
         tiles_per_row = int(math.sqrt(tiles_amount))
         mask_width, mask_height = heatmap.shape
-        tile_width, tile_height = mask_width//tiles_per_row, mask_height//tiles_per_row
+        tile_width, tile_height = (mask_width // tiles_per_row, mask_height // tiles_per_row)
 
         # Creating Contours of Threshold Mask
         threshold_image = threshold_mask.numpy().astype(uint8)
@@ -221,6 +223,7 @@ class ClipDetector:
 
 
 class Detector:
+    # fmt: off
     challenge_alias = {
         "car": "car", "cars": "car", "vehicles": "car",
         "taxis": "taxi", "taxi": "taxi",
@@ -240,6 +243,8 @@ class Detector:
         "chimney": "chimney", "chimneys": "chimney"
     }
 
+    # fmt: on
+
     def __init__(self) -> None:
         """
         Spawn a new reCognizer Detector Instance
@@ -247,8 +252,12 @@ class Detector:
         self.yolo_detector = YoloDetector()
         self.clip_detector = ClipDetector()
 
-    def detect(self, prompt: str, images: Union[Path, Union[PathLike[str], str], bytes, Sequence[Path], Sequence[Union[PathLike[str], str]], Sequence[bytes]],
-               area_captcha: Optional[bool] = None) -> Tuple[List[bool], List[Tuple[int, int]]]:
+    def detect(
+        self,
+        prompt: str,
+        images: Union[Path, Union[PathLike[str], str], bytes, Sequence[Path], Sequence[Union[PathLike[str], str]], Sequence[bytes]],
+        area_captcha: Optional[bool] = None,
+    ) -> Tuple[List[bool], List[Tuple[int, int]]]:
         """
         Create a new Botright browser instance with specified configurations.
 
@@ -320,6 +329,6 @@ class Detector:
         for i, result in enumerate(response):
             if result:
                 x, y = coordinates[i]
-                good_coordinates.append((x+random.randint(-25, 25), y+random.randint(-25, 25)))
+                good_coordinates.append((x + random.randint(-25, 25), y + random.randint(-25, 25)))
 
         return response, good_coordinates

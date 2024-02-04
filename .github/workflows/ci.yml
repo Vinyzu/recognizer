@@ -1,33 +1,32 @@
-name: Tests using PyTest
+name: reCognizer CI
 
 on:
   - push
   - pull_request
 
 jobs:
-  Lint-with-Flake8-MyPy:
-    strategy:
-      matrix:
-        os: [windows-latest, ubuntu-latest]
-        python-version: ['3.8', '3.9', '3.10', '3.11']
-
-    runs-on: ${{ matrix.os }}
+  Linting:
+    runs-on: windows-latest
     steps:
       - uses: actions/checkout@v4
-      - name: Set up Python ${{ matrix.python-version }}
+      - name: Set up Python 3.11
         uses: actions/setup-python@v4
         with:
-          python-version: ${{ matrix.python-version }}
+          python-version: '3.11'
       - name: Install dependencies
         run: |
           python -m pip install --upgrade pip
-          pip install flake8 types-setuptools mypy
-      - name: Lint using Flake8
+          pip install -r requirements-test.txt
+      - name: (Linting) isort
+        run: isort . --check-only
+      - name: (Linting) Flake8
         run: flake8 .
-      - name: Lint using MyPy
+      - name: (Linting) MyPy
         run: mypy .
+      - name: (Linting) Black
+        run: black . --check
 
-  Test-with-PyTest:
+  Build:
     strategy:
       matrix:
         os: [windows-latest, ubuntu-latest]
@@ -43,11 +42,8 @@ jobs:
     - name: Install dependencies
       run: |
         python -m pip install --upgrade pip
-        pip install tox tox-gh-actions
-    - name: Install Python Test dependencies
-      uses: py-actions/py-dependency-install@v4
-      with:
-        path: "requirements-test.txt"
+        pip install -r requirements-test.txt
+        pip install -e .
     - name: Install Chrome Browser
       uses: browser-actions/setup-chrome@v1
     - name: Install Chromium Driver

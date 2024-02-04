@@ -1,9 +1,10 @@
 from __future__ import annotations
 
-import pytest
 from contextlib import suppress
 
+import pytest
 from playwright.async_api import Page
+
 from recognizer.agents.playwright import AsyncChallenger
 
 

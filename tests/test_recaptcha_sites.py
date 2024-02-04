@@ -1,9 +1,10 @@
 from __future__ import annotations
 
-import pytest
 from contextlib import suppress
 
+import pytest
 from botright.extended_typing import Page
+
 from recognizer.agents.playwright import AsyncChallenger
 
 # All URLs:
@@ -113,6 +114,7 @@ async def test_bernsted_v2_invisible_auto(botright_page: Page):
 
     with suppress(RecursionError):
         res = await challenger.solve_recaptcha()
+        assert res
 
 
 @pytest.mark.asyncio
@@ -124,6 +126,7 @@ async def test_bernsted_v2_invisible_explicit(botright_page: Page):
 
     with suppress(RecursionError):
         res = await challenger.solve_recaptcha()
+        assert res
 
 
 @pytest.mark.asyncio
@@ -135,6 +138,7 @@ async def test_bernsted_v2_invisible_explicit_isolated(botright_page: Page):
 
     with suppress(RecursionError):
         res = await challenger.solve_recaptcha()
+        assert res
 
 
 @pytest.mark.asyncio
