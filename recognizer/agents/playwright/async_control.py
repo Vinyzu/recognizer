@@ -6,7 +6,7 @@ from contextlib import suppress
 from typing import Optional, Union
 
 from playwright.async_api import Error as PlaywrightError
-from playwright.async_api import FrameLocator, Page, Request, TimeoutError
+from playwright.async_api import FrameLocator, Page, Request, Route, TimeoutError
 
 from recognizer import Detector
 
@@ -22,34 +22,30 @@ class AsyncChallenger:
             retry_times (int, optional): Maximum amount of retries before raising an Exception. Defaults to 15.
         """
         self.page = page
+        self.routed_page = False
         self.detector = Detector()
 
         self.click_timeout = click_timeout
         self.retry_times = retry_times
         self.retried = 0
+
         self.dynamic: bool = False
-        self.captcha_token: str = ""
         self.start_timestamp: float = 0
+        self.captcha_token: Optional[str] = None
 
-        self.page.on("request", self.request_handler)
+    async def route_handler(self, route: Route, request: Request) -> None:
+        response = await route.fetch()
+        await route.fulfill(response=response)  # Instant Fulfillment to save Time
+        response_text = await response.text()
+        assert response_text
 
-    async def request_handler(self, request: Request) -> None:
-        # Check if Request url matches wanted
-        if ("google.com" not in request.url and "recaptcha.net" not in request.url) or ("reload" not in request.url and "userverify" not in request.url):
-            return
+        self.dynamic = "dynamic" in response_text
 
-        with suppress(Exception):
-            response = await request.response()
-            assert response
-            response_text = await response.text()
-
-            self.dynamic = "dynamic" in response_text
-
-            # Checking if captcha succeeded
-            if "userverify" in request.url and "rresp" not in response_text and "bgdata" not in response_text:
-                match = re.search(r'"uvresp"\s*,\s*"([^"]+)"', response_text)
-                assert match
-                self.captcha_token = match.group(1)
+        # Checking if captcha succeeded
+        if "userverify" in request.url and "rresp" not in response_text and "bgdata" not in response_text:
+            match = re.search(r'"uvresp"\s*,\s*"([^"]+)"', response_text)
+            assert match
+            self.captcha_token = match.group(1)
 
     async def check_result(self) -> Union[str, None]:
         with suppress(PlaywrightError):
@@ -81,7 +77,7 @@ class AsyncChallenger:
             return False
 
     async def detect_tiles(self, prompt: str, area_captcha: bool, verify: bool, captcha_frame: FrameLocator) -> Union[str, bool]:
-        image = await self.page.screenshot()
+        image = await self.page.screenshot(full_page=True)
         response, coordinates = self.detector.detect(prompt, image, area_captcha=area_captcha)
 
         if not any(response):
@@ -133,7 +129,7 @@ class AsyncChallenger:
 
         except TimeoutError:
             # Checking if Captcha Token is available
-            if captcha_token := await self.check_result():
+            if (captcha_token := self.captcha_token) or (captcha_token := await self.check_result()):
                 return captcha_token
             elif (time.time() - self.start_timestamp) > 120:
                 # reCaptcha Timed Out
@@ -151,11 +147,18 @@ class AsyncChallenger:
         recaptcha_tiles = await captcha_frame.locator("[class='rc-imageselect-tile']").all()
         # Checking if Captcha Loaded Properly
         for _ in range(10):
-            if len(recaptcha_tiles) in (9, 16):
+            if len(recaptcha_tiles) not in (9, 16):
+                continue
+
+            all_captcha_tiles_loaded = all([await tile.is_visible() for tile in recaptcha_tiles])
+
+            if all_captcha_tiles_loaded:
                 break
 
             await self.page.wait_for_timeout(1000)
             recaptcha_tiles = await captcha_frame.locator("[class='rc-imageselect-tile']").all()
+        else:
+            raise TimeoutError("Captcha Frame/Images did not load properly.")
 
         # Detecting Images and Clicking right Coordinates
         area_captcha = len(recaptcha_tiles) == 16
@@ -203,6 +206,12 @@ class AsyncChallenger:
         self.dynamic = False
         self.captcha_token = ""
         self.start_timestamp = time.time()
+
+        # Checking if Page needs to be routed
+        if not self.routed_page:
+            route_captcha_regex = re.compile(r"(\b(?:google\.com.*(?:reload|userverify)|recaptcha\.net.*(?:reload|userverify))\b)")
+            await self.page.route(route_captcha_regex, self.route_handler)
+            self.routed_page = True
 
         await self.click_checkbox()
         if not await self.check_captcha_visible():
