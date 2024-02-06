@@ -42,6 +42,8 @@ from recognizer.agents.playwright import AsyncChallenger
 @pytest.mark.asyncio
 async def test_bernsted_enterprise_auto_recaptchadotnet(botright_page: Page):
     challenger = AsyncChallenger(botright_page)
+    # For slow Pytest Loading
+    challenger.detector.detection_models.check_loaded()
 
     await botright_page.goto("https://berstend.github.io/static/recaptcha/enterprise-checkbox-auto-recaptchadotnet.html")
 
@@ -53,6 +55,8 @@ async def test_bernsted_enterprise_auto_recaptchadotnet(botright_page: Page):
 @pytest.mark.asyncio
 async def test_bernsted_enterprise_auto(botright_page: Page):
     challenger = AsyncChallenger(botright_page)
+    # For slow Pytest Loading
+    challenger.detector.detection_models.check_loaded()
 
     await botright_page.goto("https://berstend.github.io/static/recaptcha/enterprise-checkbox-auto.html")
 
@@ -64,6 +68,8 @@ async def test_bernsted_enterprise_auto(botright_page: Page):
 @pytest.mark.asyncio
 async def test_bernsted_enterprise_explicit(botright_page: Page):
     challenger = AsyncChallenger(botright_page)
+    # For slow Pytest Loading
+    challenger.detector.detection_models.check_loaded()
 
     await botright_page.goto("https://berstend.github.io/static/recaptcha/enterprise-checkbox-explicit.html")
 
@@ -75,6 +81,8 @@ async def test_bernsted_enterprise_explicit(botright_page: Page):
 @pytest.mark.asyncio
 async def test_bernsted_v2_auto(botright_page: Page):
     challenger = AsyncChallenger(botright_page)
+    # For slow Pytest Loading
+    challenger.detector.detection_models.check_loaded()
 
     await botright_page.goto("https://berstend.github.io/static/recaptcha/v2-checkbox-auto-nowww.html")
 
@@ -86,6 +94,8 @@ async def test_bernsted_v2_auto(botright_page: Page):
 @pytest.mark.asyncio
 async def test_bernsted_v2_auto_recaptchadotnet(botright_page: Page):
     challenger = AsyncChallenger(botright_page)
+    # For slow Pytest Loading
+    challenger.detector.detection_models.check_loaded()
 
     await botright_page.goto("https://berstend.github.io/static/recaptcha/v2-checkbox-auto-recaptchadotnet-nowww.html")
 
@@ -97,6 +107,8 @@ async def test_bernsted_v2_auto_recaptchadotnet(botright_page: Page):
 @pytest.mark.asyncio
 async def test_bernsted_v2_explicit(botright_page: Page):
     challenger = AsyncChallenger(botright_page)
+    # For slow Pytest Loading
+    challenger.detector.detection_models.check_loaded()
 
     await botright_page.goto("https://berstend.github.io/static/recaptcha/v2-checkbox-explicit.html")
 
@@ -108,6 +120,8 @@ async def test_bernsted_v2_explicit(botright_page: Page):
 @pytest.mark.asyncio
 async def test_bernsted_v2_invisible_auto(botright_page: Page):
     challenger = AsyncChallenger(botright_page)
+    # For slow Pytest Loading
+    challenger.detector.detection_models.check_loaded()
 
     await botright_page.goto("https://berstend.github.io/static/recaptcha/v2-invisible-auto.html")
     await botright_page.click("[data-callback='onSubmit']")
@@ -120,6 +134,8 @@ async def test_bernsted_v2_invisible_auto(botright_page: Page):
 @pytest.mark.asyncio
 async def test_bernsted_v2_invisible_explicit(botright_page: Page):
     challenger = AsyncChallenger(botright_page)
+    # For slow Pytest Loading
+    challenger.detector.detection_models.check_loaded()
 
     await botright_page.goto("https://berstend.github.io/static/recaptcha/v2-invisible-explicit.html")
     await botright_page.click("[id='submit']")
@@ -132,6 +148,8 @@ async def test_bernsted_v2_invisible_explicit(botright_page: Page):
 @pytest.mark.asyncio
 async def test_bernsted_v2_invisible_explicit_isolated(botright_page: Page):
     challenger = AsyncChallenger(botright_page)
+    # For slow Pytest Loading
+    challenger.detector.detection_models.check_loaded()
 
     await botright_page.goto("https://berstend.github.io/static/recaptcha/v2-invisible-explicit-isolated.html")
     await botright_page.click("[id='submit']")
@@ -145,6 +163,8 @@ async def test_bernsted_v2_invisible_explicit_isolated(botright_page: Page):
 @pytest.mark.skip(reason="No different challenge type, Skipping due to time complexity")
 async def test_recaptcha_net(botright_page: Page):
     challenger = AsyncChallenger(botright_page)
+    # For slow Pytest Loading
+    challenger.detector.detection_models.check_loaded()
 
     await botright_page.goto("https://www.recaptcha.net/recaptcha/api2/demo")
 
@@ -157,6 +177,8 @@ async def test_recaptcha_net(botright_page: Page):
 @pytest.mark.skip(reason="No different challenge type, Skipping due to time complexity")
 async def test_recaptcha_demo_appspot(botright_page: Page):
     challenger = AsyncChallenger(botright_page)
+    # For slow Pytest Loading
+    challenger.detector.detection_models.check_loaded()
 
     await botright_page.goto("https://recaptcha-demo.appspot.com/recaptcha-v2-checkbox-explicit.php")
 
@@ -169,6 +191,8 @@ async def test_recaptcha_demo_appspot(botright_page: Page):
 @pytest.mark.skip(reason="No different challenge type, Skipping due to time complexity")
 async def test_nopecha_easy(botright_page: Page):
     challenger = AsyncChallenger(botright_page)
+    # For slow Pytest Loading
+    challenger.detector.detection_models.check_loaded()
 
     await botright_page.goto("https://nopecha.com/demo/recaptcha#easy")
 
@@ -181,6 +205,8 @@ async def test_nopecha_easy(botright_page: Page):
 @pytest.mark.skip(reason="No different challenge type, Skipping due to time complexity")
 async def test_nopecha_moderate(botright_page: Page):
     challenger = AsyncChallenger(botright_page)
+    # For slow Pytest Loading
+    challenger.detector.detection_models.check_loaded()
 
     await botright_page.goto("https://nopecha.com/demo/recaptcha#moderate")
 
@@ -193,6 +219,8 @@ async def test_nopecha_moderate(botright_page: Page):
 @pytest.mark.skip(reason="No different challenge type, Skipping due to time complexity")
 async def test_nopecha_hard(botright_page: Page):
     challenger = AsyncChallenger(botright_page)
+    # For slow Pytest Loading
+    challenger.detector.detection_models.check_loaded()
 
     await botright_page.goto("https://nopecha.com/demo/recaptcha#hard")
 
@@ -205,6 +233,8 @@ async def test_nopecha_hard(botright_page: Page):
 @pytest.mark.skip(reason="No different challenge type, Skipping due to time complexity")
 async def test_2captcha_v2(botright_page: Page):
     challenger = AsyncChallenger(botright_page)
+    # For slow Pytest Loading
+    challenger.detector.detection_models.check_loaded()
 
     await botright_page.goto("https://2captcha.com/demo/recaptcha-v2")
 
@@ -217,6 +247,8 @@ async def test_2captcha_v2(botright_page: Page):
 @pytest.mark.skip(reason="No different challenge type, Skipping due to time complexity")
 async def test_2captcha_v2_invisible(botright_page: Page):
     challenger = AsyncChallenger(botright_page)
+    # For slow Pytest Loading
+    challenger.detector.detection_models.check_loaded()
 
     await botright_page.goto("https://2captcha.com/demo/recaptcha-v2-invisible")
 
@@ -229,6 +261,8 @@ async def test_2captcha_v2_invisible(botright_page: Page):
 @pytest.mark.skip(reason="No different challenge type, Skipping due to time complexity")
 async def test_2captcha_v2_callback(botright_page: Page):
     challenger = AsyncChallenger(botright_page)
+    # For slow Pytest Loading
+    challenger.detector.detection_models.check_loaded()
 
     await botright_page.goto("https://2captcha.com/demo/recaptcha-v2-callback")
 
@@ -241,6 +275,8 @@ async def test_2captcha_v2_callback(botright_page: Page):
 @pytest.mark.skip(reason="No different challenge type, Skipping due to time complexity")
 async def test_2captcha_v2_enterprise(botright_page: Page):
     challenger = AsyncChallenger(botright_page)
+    # For slow Pytest Loading
+    challenger.detector.detection_models.check_loaded()
 
     await botright_page.goto("https://2captcha.com/demo/recaptcha-v2-enterprise")
 
@@ -253,6 +289,8 @@ async def test_2captcha_v2_enterprise(botright_page: Page):
 @pytest.mark.skip(reason="No different challenge type, Skipping due to time complexity")
 async def test_2captcha_v3_enterprise(botright_page: Page):
     challenger = AsyncChallenger(botright_page)
+    # For slow Pytest Loading
+    challenger.detector.detection_models.check_loaded()
 
     await botright_page.goto("https://2captcha.com/demo/recaptcha-v3-enterprise")
 
@@ -265,6 +303,8 @@ async def test_2captcha_v3_enterprise(botright_page: Page):
 @pytest.mark.skip(reason="No different challenge type, Skipping due to time complexity")
 async def test_2captcha_v3(botright_page: Page):
     challenger = AsyncChallenger(botright_page)
+    # For slow Pytest Loading
+    challenger.detector.detection_models.check_loaded()
 
     await botright_page.goto("https://2captcha.com/demo/recaptcha-v3")
 
@@ -277,6 +317,8 @@ async def test_2captcha_v3(botright_page: Page):
 @pytest.mark.skip(reason="No different challenge type, Skipping due to time complexity")
 async def test_patrickhlauke(botright_page: Page):
     challenger = AsyncChallenger(botright_page)
+    # For slow Pytest Loading
+    challenger.detector.detection_models.check_loaded()
 
     await botright_page.goto("https://patrickhlauke.github.io/recaptcha/")
 
@@ -289,6 +331,8 @@ async def test_patrickhlauke(botright_page: Page):
 @pytest.mark.skip(reason="No different challenge type, Skipping due to time complexity")
 async def test_testrecaptcha_github(botright_page: Page):
     challenger = AsyncChallenger(botright_page)
+    # For slow Pytest Loading
+    challenger.detector.detection_models.check_loaded()
 
     await botright_page.goto("https://testrecaptcha.github.io/")
 
@@ -301,6 +345,8 @@ async def test_testrecaptcha_github(botright_page: Page):
 @pytest.mark.skip(reason="No different challenge type, Skipping due to time complexity")
 async def test_lyates_v2(botright_page: Page):
     challenger = AsyncChallenger(botright_page)
+    # For slow Pytest Loading
+    challenger.detector.detection_models.check_loaded()
 
     await botright_page.goto("http://www.recaptcha2.lyates.com/")
 
@@ -313,6 +359,8 @@ async def test_lyates_v2(botright_page: Page):
 @pytest.mark.skip(reason="No different challenge type, Skipping due to time complexity")
 async def test_usda_v2(botright_page: Page):
     challenger = AsyncChallenger(botright_page)
+    # For slow Pytest Loading
+    challenger.detector.detection_models.check_loaded()
 
     await botright_page.goto("https://ask.usda.gov/resource/1589940255000/recaptcha2")
 
@@ -325,6 +373,8 @@ async def test_usda_v2(botright_page: Page):
 @pytest.mark.skip(reason="No different challenge type, Skipping due to time complexity")
 async def test_jfo_moj_go_th_v3(botright_page: Page):
     challenger = AsyncChallenger(botright_page)
+    # For slow Pytest Loading
+    challenger.detector.detection_models.check_loaded()
 
     await botright_page.goto("https://jfo.moj.go.th/page/complain3.php")
 
@@ -337,6 +387,8 @@ async def test_jfo_moj_go_th_v3(botright_page: Page):
 @pytest.mark.skip(reason="No different challenge type, Skipping due to time complexity")
 async def test_huyliem_windows(botright_page: Page):
     challenger = AsyncChallenger(botright_page)
+    # For slow Pytest Loading
+    challenger.detector.detection_models.check_loaded()
 
     await botright_page.goto("https://huyliem.z23.web.core.windows.net/")
 
@@ -349,6 +401,8 @@ async def test_huyliem_windows(botright_page: Page):
 @pytest.mark.skip(reason="No different challenge type, Skipping due to time complexity")
 async def test_opju_ac_in(botright_page: Page):
     challenger = AsyncChallenger(botright_page)
+    # For slow Pytest Loading
+    challenger.detector.detection_models.check_loaded()
 
     await botright_page.goto("https://www.opju.ac.in/nitincap")
 
@@ -361,6 +415,8 @@ async def test_opju_ac_in(botright_page: Page):
 @pytest.mark.skip(reason="No different challenge type, Skipping due to time complexity")
 async def test_flight_simulators_mailtest(botright_page: Page):
     challenger = AsyncChallenger(botright_page)
+    # For slow Pytest Loading
+    challenger.detector.detection_models.check_loaded()
 
     await botright_page.goto("https://www.flight-simulators.co.uk/acatalog/mailtest1.php")
 
@@ -373,6 +429,8 @@ async def test_flight_simulators_mailtest(botright_page: Page):
 @pytest.mark.skip(reason="No different challenge type, Skipping due to time complexity")
 async def test_evans_email_glitch(botright_page: Page):
     challenger = AsyncChallenger(botright_page)
+    # For slow Pytest Loading
+    challenger.detector.detection_models.check_loaded()
 
     await botright_page.goto("https://evans-email.glitch.me/")
 

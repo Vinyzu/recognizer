@@ -249,6 +249,7 @@ class Detector:
         """
         Spawn a new reCognizer Detector Instance
         """
+        self.detection_models: DetectionModels = detection_models
         self.yolo_detector = YoloDetector()
         self.clip_detector = ClipDetector()
 

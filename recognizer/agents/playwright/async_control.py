@@ -143,22 +143,19 @@ class AsyncChallenger:
             print("[ERROR] reCaptcha Frame did not load.")
             return False
 
-        # Getting Recaptcha Tiles
-        recaptcha_tiles = await captcha_frame.locator("[class='rc-imageselect-tile']").all()
         # Checking if Captcha Loaded Properly
-        for _ in range(10):
-            if len(recaptcha_tiles) not in (9, 16):
-                continue
-
-            all_captcha_tiles_loaded = all([await tile.is_visible() for tile in recaptcha_tiles])
-
-            if all_captcha_tiles_loaded:
-                break
-
-            await self.page.wait_for_timeout(1000)
+        for _ in range(30):
+            # Getting Recaptcha Tiles
             recaptcha_tiles = await captcha_frame.locator("[class='rc-imageselect-tile']").all()
+            if len(recaptcha_tiles) in (9, 16):
+                break
+            await self.page.wait_for_timeout(1000)
         else:
             raise TimeoutError("Captcha Frame/Images did not load properly.")
+
+        # Checking for Visibility
+        for tile in recaptcha_tiles:
+            await tile.wait_for(state="visible", timeout=30000)
 
         # Detecting Images and Clicking right Coordinates
         area_captcha = len(recaptcha_tiles) == 16
