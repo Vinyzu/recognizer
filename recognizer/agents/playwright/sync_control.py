@@ -118,42 +118,39 @@ class SyncChallenger:
         reload_button.click()
         return self.handle_recaptcha()
 
+    def check_reclick(self):
+        time_since_start = time.time() - self.start_timestamp
+        if not self.check_captcha_visible() or time_since_start > 110:
+            if not self.click_checkbox():
+                raise RecursionError("Invisible reCaptcha Timed Out.")
+
+        if not self.check_captcha_visible():
+            print("[ERROR] reCaptcha Challenge is not visible.")
+            return False
+
+        return True
+
     def handle_recaptcha(self) -> Union[str, bool]:
-        try:
-            # Getting the Captcha Frame
-            captcha_frame = self.page.frame_locator("//iframe[contains(@src,'bframe')]")
-            label_obj = captcha_frame.locator("//strong")
-            prompt = label_obj.text_content()
-
-            if not prompt:
-                raise ValueError("reCaptcha Task Text did not load.")
-
-        except TimeoutError:
-            # Checking if Captcha Token is available
+        if not self.check_reclick():
             if (captcha_token := self.captcha_token) or (captcha_token := self.check_result()):
                 return captcha_token
-            elif (time.time() - self.start_timestamp) > 120:
-                # reCaptcha Timed Out
-                if self.click_checkbox():
-                    # Retrying
-                    self.check_retry()
-                    return self.handle_recaptcha()
-                else:
-                    raise RecursionError("Invisible reCaptcha Timed Out.")
 
             print("[ERROR] reCaptcha Frame did not load.")
             return False
+
+        # Getting the Captcha Frame
+        captcha_frame = self.page.frame_locator("//iframe[contains(@src,'bframe')]")
+        label_obj = captcha_frame.locator("//strong")
+        prompt = label_obj.text_content()
+        if not prompt:
+            raise ValueError("reCaptcha Task Text did not load.")
 
         # Checking if Captcha Loaded Properly
         for _ in range(30):
             # Getting Recaptcha Tiles
             recaptcha_tiles = captcha_frame.locator("[class='rc-imageselect-tile']").all()
-            if len(recaptcha_tiles) not in (9, 16):
-                continue
-
-            all_captcha_tiles_loaded = all([tile.is_visible() for tile in recaptcha_tiles])
-
-            if all_captcha_tiles_loaded:
+            tiles_visibility = [tile.is_visible() for tile in recaptcha_tiles]
+            if len(recaptcha_tiles) in (9, 16) and len(tiles_visibility) in (9, 16):
                 break
 
             self.page.wait_for_timeout(1000)
@@ -173,7 +170,6 @@ class SyncChallenger:
         if isinstance(not_yet_passed, str):
             return not_yet_passed
 
-        # Resetting value if challenge fails
         # Submit challenge
         try:
             submit_button = captcha_frame.locator("#recaptcha-verify-button")
@@ -182,7 +178,6 @@ class SyncChallenger:
             if self.check_captcha_visible():
                 print("[WARNING] Could not submit challenge. Verify Button did not load.")
 
-        pass
         # Waiting for captcha_token for 5 seconds
         for _ in range(5):
             if (captcha_token := self.captcha_token) or (captcha_token := self.check_result()):
