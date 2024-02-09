@@ -1,7 +1,6 @@
 from __future__ import annotations
 
 import re
-import time
 from contextlib import suppress
 from typing import Optional, Union
 
@@ -30,8 +29,12 @@ class AsyncChallenger:
         self.retried = 0
 
         self.dynamic: bool = False
-        self.start_timestamp: float = 0
         self.captcha_token: Optional[str] = None
+
+    def check_retry(self):
+        self.retried += 1
+        if self.retried >= self.retry_times:
+            raise RecursionError(f"Exceeded maximum retry times of {self.retry_times}")
 
     async def route_handler(self, route: Route, request: Request) -> None:
         response = await route.fetch()
@@ -48,6 +51,9 @@ class AsyncChallenger:
             self.captcha_token = match.group(1)
 
     async def check_result(self) -> Union[str, None]:
+        if self.captcha_token:
+            return self.captcha_token
+
         with suppress(PlaywrightError):
             captcha_token: str = await self.page.evaluate("grecaptcha.getResponse()")
             return captcha_token
@@ -71,21 +77,17 @@ class AsyncChallenger:
         # Clicking Captcha Checkbox
         try:
             checkbox = self.page.frame_locator("iframe[title='reCAPTCHA']")
-            await checkbox.locator(".recaptcha-checkbox-border").click(timeout=5000)
+            await checkbox.locator(".recaptcha-checkbox-border").click()
             return True
         except TimeoutError:
-            return False
+            raise TimeoutError("[ERROR] Could not click reCaptcha Checkbox.")
 
-    async def detect_tiles(self, prompt: str, area_captcha: bool, verify: bool, captcha_frame: FrameLocator) -> Union[str, bool]:
+    async def detect_tiles(self, prompt: str, area_captcha: bool) -> bool:
         image = await self.page.screenshot(full_page=True)
         response, coordinates = self.detector.detect(prompt, image, area_captcha=area_captcha)
 
         if not any(response):
-            if not verify:
-                print("[ERROR] Detector did not return any Results.")
-                return await self.retry(captcha_frame, verify=verify)
-            else:
-                return False
+            return False
 
         for coord_x, coord_y in coordinates:
             await self.page.mouse.click(coord_x, coord_y)
@@ -94,55 +96,38 @@ class AsyncChallenger:
 
         return True
 
-    def check_retry(self):
-        self.retried += 1
-        if self.retried >= self.retry_times:
-            raise RecursionError(f"Exceeded maximum retry times of {self.retry_times}")
-
-    async def retry(self, captcha_frame, verify=False) -> Union[str, bool]:
+    async def load_captcha(self, captcha_frame: Optional[FrameLocator] = None, reset: Optional[bool] = False) -> Union[str, bool]:
         # Retrying
         self.check_retry()
 
-        # Resetting Values
-        self.dynamic = False
-        self.captcha_token = ""
-        self.start_timestamp = time.time()
+        if not await self.check_captcha_visible():
+            if captcha_token := await self.check_result():
+                return captcha_token
+            elif not await self.click_checkbox():
+                raise TimeoutError("Invisible reCaptcha Timed Out.")
+
+        assert await self.check_captcha_visible(), TimeoutError("[ERROR] reCaptcha Challenge is not visible.")
 
         # Clicking Reload Button
-        if verify:
+        if reset:
+            assert isinstance(captcha_frame, FrameLocator)
             reload_button = captcha_frame.locator("#recaptcha-verify-button")
-        else:
-            print("[INFO] Reloading Captcha and Retrying")
-            reload_button = captcha_frame.locator("#recaptcha-reload-button")
-        await reload_button.click()
-        return await self.handle_recaptcha()
+            await reload_button.click()
 
-    async def check_reclick(self):
-        time_since_start = time.time() - self.start_timestamp
-        if not await self.check_captcha_visible() or time_since_start > 110:
-            if not await self.click_checkbox():
-                raise RecursionError("Invisible reCaptcha Timed Out.")
-
-        if not await self.check_captcha_visible():
-            print("[ERROR] reCaptcha Challenge is not visible.")
-            return False
+            # Resetting Values
+            self.dynamic = False
+            self.captcha_token = ""
 
         return True
 
     async def handle_recaptcha(self) -> Union[str, bool]:
-        if not await self.check_reclick():
-            if (captcha_token := self.captcha_token) or (captcha_token := await self.check_result()):
-                return captcha_token
-
-            print("[ERROR] reCaptcha Frame did not load.")
-            return False
+        if isinstance(loaded_captcha := await self.load_captcha(), str):
+            return loaded_captcha
 
         # Getting the Captcha Frame
         captcha_frame = self.page.frame_locator("//iframe[contains(@src,'bframe')]")
         label_obj = captcha_frame.locator("//strong")
-        prompt = await label_obj.text_content()
-
-        if not prompt:
+        if not (prompt := await label_obj.text_content()):
             raise ValueError("reCaptcha Task Text did not load.")
 
         # Checking if Captcha Loaded Properly
@@ -155,38 +140,39 @@ class AsyncChallenger:
 
             await self.page.wait_for_timeout(1000)
         else:
-            raise TimeoutError("Captcha Frame/Images did not load properly.")
+            await self.load_captcha(captcha_frame, reset=True)
+            return await self.handle_recaptcha()
 
         # Detecting Images and Clicking right Coordinates
         area_captcha = len(recaptcha_tiles) == 16
-        not_yet_passed = await self.detect_tiles(prompt, area_captcha, area_captcha, captcha_frame)
+        result_clicked = await self.detect_tiles(prompt, area_captcha)
 
-        if self.dynamic and not area_captcha:
-            while not_yet_passed:
+        if self.dynamic and not len(recaptcha_tiles) == 16:
+            while result_clicked:
                 await self.page.wait_for_timeout(5000)
-                not_yet_passed = await self.detect_tiles(prompt, area_captcha, True, captcha_frame)
-
-        # Check if returned captcha_token (str)
-        if isinstance(not_yet_passed, str):
-            return not_yet_passed
+                result_clicked = await self.detect_tiles(prompt, area_captcha)
+        elif not result_clicked:
+            await self.load_captcha(captcha_frame, reset=True)
+            return await self.handle_recaptcha()
 
         # Submit challenge
         try:
             submit_button = captcha_frame.locator("#recaptcha-verify-button")
-            await submit_button.click(timeout=5000)
+            await submit_button.click()
         except TimeoutError:
-            if await self.check_captcha_visible():
-                print("[WARNING] Could not submit challenge. Verify Button did not load.")
+            await self.load_captcha(captcha_frame, reset=True)
+            return await self.handle_recaptcha()
 
         # Waiting for captcha_token for 5 seconds
         for _ in range(5):
-            if (captcha_token := self.captcha_token) or (captcha_token := await self.check_result()):
+            if captcha_token := await self.check_result():
                 return captcha_token
 
             await self.page.wait_for_timeout(1000)
 
         # Retrying
         self.check_retry()
+        await self.load_captcha(captcha_frame, reset=True)
         return await self.handle_recaptcha()
 
     async def solve_recaptcha(self) -> Union[str, bool]:
@@ -201,7 +187,6 @@ class AsyncChallenger:
         # Resetting Values
         self.dynamic = False
         self.captcha_token = ""
-        self.start_timestamp = time.time()
 
         # Checking if Page needs to be routed
         if not self.routed_page:
@@ -210,9 +195,5 @@ class AsyncChallenger:
             self.routed_page = True
 
         await self.click_checkbox()
-        if not await self.check_captcha_visible():
-            print("[ERROR] reCaptcha Challenge is not visible.")
-            return False
-
         await self.page.wait_for_timeout(2000)
         return await self.handle_recaptcha()
