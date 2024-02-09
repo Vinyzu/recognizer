@@ -44,7 +44,7 @@ jobs:
         python -m pip install --upgrade pip
         pip install -r requirements-test.txt
         pip install -e .
-        python -c 'import os; os.environ[""TOKENIZERS_PARALLELISM""] = ""false""'
+        python -c "import os; os.environ['TOKENIZERS_PARALLELISM'] = 'false'"
     - name: Install Chrome Browser
       uses: browser-actions/setup-chrome@v1
     - name: Install Chromium Driver
