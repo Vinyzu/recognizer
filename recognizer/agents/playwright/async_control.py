@@ -80,7 +80,7 @@ class AsyncChallenger:
             await checkbox.locator(".recaptcha-checkbox-border").click()
             return True
         except TimeoutError:
-            raise TimeoutError("[ERROR] Could not click reCaptcha Checkbox.")
+            return False
 
     async def detect_tiles(self, prompt: str, area_captcha: bool) -> bool:
         image = await self.page.screenshot(full_page=True)

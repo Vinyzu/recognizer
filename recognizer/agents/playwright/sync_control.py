@@ -80,7 +80,7 @@ class SyncChallenger:
             checkbox.locator(".recaptcha-checkbox-border").click()
             return True
         except TimeoutError:
-            raise TimeoutError("[ERROR] Could not click reCaptcha Checkbox.")
+            return False
 
     def detect_tiles(self, prompt: str, area_captcha: bool) -> bool:
         image = self.page.screenshot(full_page=True)
