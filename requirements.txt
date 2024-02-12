@@ -4,4 +4,4 @@ imageio~=2.33.1
 ultralytics~=8.1.9
 transformers~=4.37.2
 numpy~=1.26.3
-playwright~=1.41.0
+playwright~=1.41.2
