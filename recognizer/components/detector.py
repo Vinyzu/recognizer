@@ -3,10 +3,10 @@ from __future__ import annotations
 import math
 import random
 import warnings
-from concurrent.futures import ThreadPoolExecutor
+from concurrent.futures import Future, ThreadPoolExecutor
 from os import PathLike
 from pathlib import Path
-from typing import List, Optional, Sequence, Tuple, Union
+from typing import Callable, List, Optional, Sequence, Tuple, Union
 
 import cv2
 from numpy import generic, uint8
@@ -23,12 +23,16 @@ warnings.filterwarnings("ignore", category=UserWarning, message="TypedStorage is
 class DetectionModels:
     def __init__(self) -> None:
         # Preloading: Loading Models takes ~9 seconds
-        set_num_threads(2)
-        self.executor = ThreadPoolExecutor(max_workers=2)
+        set_num_threads(5)
+        self.executor = ThreadPoolExecutor(max_workers=5)
+        self.loading_futures: List[Future[Callable[..., None]]] = []
 
         try:
-            self.yolo_loading_feature = self.executor.submit(self._load_yolo_detector)
-            self.clip_loading_feature = self.executor.submit(self._load_clip_detector)
+            self.loading_futures.append(self.executor.submit(self._load_yolo_detector))
+            self.loading_futures.append(self.executor.submit(self._load_vit_model))
+            self.loading_futures.append(self.executor.submit(self._load_vit_processor))
+            self.loading_futures.append(self.executor.submit(self._load_seg_model))
+            self.loading_futures.append(self.executor.submit(self._load_seg_processor))
         except Exception as e:
             self.executor.shutdown(wait=True, cancel_futures=True)
             raise e
@@ -38,20 +42,31 @@ class DetectionModels:
 
         self.yolo_model = YOLO("yolov8m-seg.pt")
 
-    def _load_clip_detector(self):
-        from transformers import CLIPModel, CLIPProcessor, CLIPSegForImageSegmentation, CLIPSegProcessor
+    def _load_vit_model(self):
+        from transformers import CLIPModel
 
         self.vit_model = CLIPModel.from_pretrained("flavour/CLIP-ViT-B-16-DataComp.XL-s13B-b90K")
+
+    def _load_vit_processor(self):
+        from transformers import CLIPProcessor
+
         self.vit_processor = CLIPProcessor.from_pretrained("flavour/CLIP-ViT-B-16-DataComp.XL-s13B-b90K")
 
+    def _load_seg_model(self):
+        from transformers import CLIPSegForImageSegmentation
+
         self.seg_model = CLIPSegForImageSegmentation.from_pretrained("CIDAS/clipseg-rd64-refined")
+
+    def _load_seg_processor(self):
+        from transformers import CLIPSegProcessor
+
         self.seg_processor = CLIPSegProcessor.from_pretrained("CIDAS/clipseg-rd64-refined")
 
     def check_loaded(self):
         try:
-            if not self.yolo_loading_feature.done() or not self.clip_loading_feature.done():
-                self.yolo_loading_feature.result()
-                self.clip_loading_feature.result()
+            if not all([future.done() for future in self.loading_futures]):
+                for future in self.loading_futures:
+                    future.result()
 
             assert self.yolo_model
             assert self.seg_model

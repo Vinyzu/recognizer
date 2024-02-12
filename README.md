@@ -1,5 +1,6 @@
-# reCognizer v1.2
-![Tests & Linting](https://github.com/Vinyzu/recognizer/actions/workflows/tests.yml/badge.svg)
+# reCognizer v1.3
+![Tests & Linting](https://github.com/Vinyzu/recognizer/actions/workflows/ci.yml/badge.svg)
+
 
 #### reCognizer is a free-to-use AI based [reCaptcha](https://developers.google.com/recaptcha) Solver. <br> Usable with an easy-to-use API, also available for Async and Sync Playwright. <br> You can pass almost any format into the Challenger, from full-page screenshots, only-captcha images and no-border images to single images in a list.
 
@@ -10,6 +11,16 @@
 ```bash
 pip install recognizer
 ```
+
+---
+
+## Examples
+
+### Possible Image Inputs
+![Accepted Formats](https://i.ibb.co/nztTD9Z/formats.png)
+
+### Example Solve Video (Good IP & Botright)
+https://github.com/Vinyzu/recognizer/assets/50874994/95a713e3-bb46-474b-994f-cb3dacae9279
 
 ---
 
@@ -107,7 +118,7 @@ asyncio.run(main())
 
 ---
 
-![Version](https://img.shields.io/badge/reCognizer-v1.2-blue)
+![Version](https://img.shields.io/badge/reCognizer-v1.3-blue)
 ![License](https://img.shields.io/badge/License-GNU%20GPL-green)
 ![Python](https://img.shields.io/badge/Python-v3.x-lightgrey)
 

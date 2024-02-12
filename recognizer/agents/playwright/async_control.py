@@ -31,11 +31,6 @@ class AsyncChallenger:
         self.dynamic: bool = False
         self.captcha_token: Optional[str] = None
 
-    def check_retry(self):
-        self.retried += 1
-        if self.retried >= self.retry_times:
-            raise RecursionError(f"Exceeded maximum retry times of {self.retry_times}")
-
     async def route_handler(self, route: Route, request: Request) -> None:
         response = await route.fetch()
         await route.fulfill(response=response)  # Instant Fulfillment to save Time
@@ -69,9 +64,10 @@ class AsyncChallenger:
         label_obj = captcha_frame.locator("//strong")
         try:
             await label_obj.wait_for(state="visible", timeout=10000)
-            return True
         except TimeoutError:
             return False
+
+        return await label_obj.is_visible()
 
     async def click_checkbox(self) -> bool:
         # Clicking Captcha Checkbox
@@ -98,7 +94,9 @@ class AsyncChallenger:
 
     async def load_captcha(self, captcha_frame: Optional[FrameLocator] = None, reset: Optional[bool] = False) -> Union[str, bool]:
         # Retrying
-        self.check_retry()
+        self.retried += 1
+        if self.retried >= self.retry_times:
+            raise RecursionError(f"Exceeded maximum retry times of {self.retry_times}")
 
         if not await self.check_captcha_visible():
             if captcha_token := await self.check_result():
@@ -111,8 +109,11 @@ class AsyncChallenger:
         # Clicking Reload Button
         if reset:
             assert isinstance(captcha_frame, FrameLocator)
-            reload_button = captcha_frame.locator("#recaptcha-verify-button")
-            await reload_button.click()
+            try:
+                reload_button = captcha_frame.locator("#recaptcha-reload-button")
+                await reload_button.click()
+            except TimeoutError:
+                return await self.load_captcha()
 
             # Resetting Values
             self.dynamic = False
@@ -147,7 +148,7 @@ class AsyncChallenger:
         area_captcha = len(recaptcha_tiles) == 16
         result_clicked = await self.detect_tiles(prompt, area_captcha)
 
-        if self.dynamic and not len(recaptcha_tiles) == 16:
+        if self.dynamic and not area_captcha:
             while result_clicked:
                 await self.page.wait_for_timeout(5000)
                 result_clicked = await self.detect_tiles(prompt, area_captcha)
@@ -170,9 +171,13 @@ class AsyncChallenger:
 
             await self.page.wait_for_timeout(1000)
 
+        # Check if error occurred whilst solving
+        incorrect = self.page.locator("[class='rc-imageselect-incorrect-response']")
+        errors = self.page.locator("[class *= 'rc-imageselect-error']")
+        if await incorrect.is_visible() or any([await error.is_visible() for error in await errors.all()]):
+            await self.load_captcha(captcha_frame, reset=True)
+
         # Retrying
-        self.check_retry()
-        await self.load_captcha(captcha_frame, reset=True)
         return await self.handle_recaptcha()
 
     async def solve_recaptcha(self) -> Union[str, bool]:

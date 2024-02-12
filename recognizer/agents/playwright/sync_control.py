@@ -31,11 +31,6 @@ class SyncChallenger:
         self.dynamic: bool = False
         self.captcha_token: Optional[str] = None
 
-    def check_retry(self):
-        self.retried += 1
-        if self.retried >= self.retry_times:
-            raise RecursionError(f"Exceeded maximum retry times of {self.retry_times}")
-
     def route_handler(self, route: Route, request: Request) -> None:
         response = route.fetch()
         route.fulfill(response=response)  # Instant Fulfillment to save Time
@@ -69,9 +64,10 @@ class SyncChallenger:
         label_obj = captcha_frame.locator("//strong")
         try:
             label_obj.wait_for(state="visible", timeout=10000)
-            return True
         except TimeoutError:
             return False
+
+        return label_obj.is_visible()
 
     def click_checkbox(self) -> bool:
         # Clicking Captcha Checkbox
@@ -98,7 +94,9 @@ class SyncChallenger:
 
     def load_captcha(self, captcha_frame: Optional[FrameLocator] = None, reset: Optional[bool] = False) -> Union[str, bool]:
         # Retrying
-        self.check_retry()
+        self.retried += 1
+        if self.retried >= self.retry_times:
+            raise RecursionError(f"Exceeded maximum retry times of {self.retry_times}")
 
         if not self.check_captcha_visible():
             if captcha_token := self.check_result():
@@ -111,8 +109,11 @@ class SyncChallenger:
         # Clicking Reload Button
         if reset:
             assert isinstance(captcha_frame, FrameLocator)
-            reload_button = captcha_frame.locator("#recaptcha-verify-button")
-            reload_button.click()
+            try:
+                reload_button = captcha_frame.locator("#recaptcha-reload-button")
+                reload_button.click()
+            except TimeoutError:
+                return self.load_captcha()
 
             # Resetting Values
             self.dynamic = False
@@ -147,7 +148,7 @@ class SyncChallenger:
         area_captcha = len(recaptcha_tiles) == 16
         result_clicked = self.detect_tiles(prompt, area_captcha)
 
-        if self.dynamic and not len(recaptcha_tiles) == 16:
+        if self.dynamic and not area_captcha:
             while result_clicked:
                 self.page.wait_for_timeout(5000)
                 result_clicked = self.detect_tiles(prompt, area_captcha)
@@ -170,9 +171,13 @@ class SyncChallenger:
 
             self.page.wait_for_timeout(1000)
 
+        # Check if error occurred whilst solving
+        incorrect = self.page.locator("[class='rc-imageselect-incorrect-response']")
+        errors = self.page.locator("[class *= 'rc-imageselect-error']")
+        if incorrect.is_visible() or any([error.is_visible() for error in errors.all()]):
+            self.load_captcha(captcha_frame, reset=True)
+
         # Retrying
-        self.check_retry()
-        self.load_captcha(captcha_frame, reset=True)
         return self.handle_recaptcha()
 
     def solve_recaptcha(self) -> Union[str, bool]:
