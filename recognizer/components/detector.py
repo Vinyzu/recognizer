@@ -13,6 +13,7 @@ import cv2
 from numpy import generic, uint8
 from numpy.typing import NDArray
 from torch import no_grad, set_num_threads
+from transformers import CLIPModel, CLIPProcessor, CLIPSegForImageSegmentation, CLIPSegProcessor
 
 from .detection_processor import calculate_approximated_coords, calculate_segmentation_response, get_tiles_in_bounding_box
 from .image_processor import create_image_grid, handle_multiple_images, handle_single_image
@@ -47,23 +48,15 @@ class DetectionModels:
         self.yolo_model = YOLO("yolov8m-seg.pt")
 
     def _load_vit_model(self):
-        from transformers import CLIPModel
-
         self.vit_model = CLIPModel.from_pretrained("flavour/CLIP-ViT-B-16-DataComp.XL-s13B-b90K")
 
     def _load_vit_processor(self):
-        from transformers import CLIPProcessor
-
         self.vit_processor = CLIPProcessor.from_pretrained("flavour/CLIP-ViT-B-16-DataComp.XL-s13B-b90K")
 
     def _load_seg_model(self):
-        from transformers import CLIPSegForImageSegmentation
-
         self.seg_model = CLIPSegForImageSegmentation.from_pretrained("CIDAS/clipseg-rd64-refined")
 
     def _load_seg_processor(self):
-        from transformers import CLIPSegProcessor
-
         self.seg_processor = CLIPSegProcessor.from_pretrained("CIDAS/clipseg-rd64-refined")
 
     def check_loaded(self):
