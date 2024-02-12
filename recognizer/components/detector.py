@@ -2,6 +2,7 @@ from __future__ import annotations
 
 import math
 import random
+import sys
 import warnings
 from concurrent.futures import Future, ThreadPoolExecutor
 from os import PathLike
@@ -34,7 +35,10 @@ class DetectionModels:
             self.loading_futures.append(self.executor.submit(self._load_seg_model))
             self.loading_futures.append(self.executor.submit(self._load_seg_processor))
         except Exception as e:
-            self.executor.shutdown(wait=True, cancel_futures=True)
+            if sys.version_info.minor >= 9:
+                self.executor.shutdown(wait=True, cancel_futures=True)
+            else:
+                self.executor.shutdown(wait=True)
             raise e
 
     def _load_yolo_detector(self):
@@ -72,7 +76,10 @@ class DetectionModels:
             assert self.seg_model
             assert self.vit_model
         except Exception as e:
-            self.executor.shutdown(wait=True, cancel_futures=True)
+            if sys.version_info.minor >= 9:
+                self.executor.shutdown(wait=True, cancel_futures=True)
+            else:
+                self.executor.shutdown(wait=True)
             raise e
 
 

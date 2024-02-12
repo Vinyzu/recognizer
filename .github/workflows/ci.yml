@@ -52,7 +52,7 @@ jobs:
     - name: Install HuggingFace Models
       run: |
         pip install -U "huggingface_hub[cli]"
-        huggingface-cli download flavour/CLIP-ViT-B-16-DataComp.XL-s13B-b90K config.json
-        huggingface-cli download CIDAS/clipseg-rd64-refined config.json
+        huggingface-cli download flavour/CLIP-ViT-B-16-DataComp.XL-s13B-b90K
+        huggingface-cli download CIDAS/clipseg-rd64-refined
     - name: Test with PyTest
       run: pytest
