@@ -4,7 +4,7 @@ tox==4.13.0
 pytest==8.0.1
 pytest_asyncio==0.23.5
 mypy==1.8.0
-types-setuptools==69.0.0.20240125
+types-setuptools==69.1.0.20240223
 botright==0.5.1
 playwright==1.40.0
 black==24.1.1
