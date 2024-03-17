@@ -72,7 +72,7 @@ class SyncChallenger:
     def click_checkbox(self) -> bool:
         # Clicking Captcha Checkbox
         try:
-            checkbox = self.page.frame_locator("iframe[title='reCAPTCHA']")
+            checkbox = self.page.frame_locator("iframe[title='reCAPTCHA']").first
             checkbox.locator(".recaptcha-checkbox-border").click()
             return True
         except TimeoutError:

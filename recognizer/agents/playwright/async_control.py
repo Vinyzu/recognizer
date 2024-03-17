@@ -72,7 +72,7 @@ class AsyncChallenger:
     async def click_checkbox(self) -> bool:
         # Clicking Captcha Checkbox
         try:
-            checkbox = self.page.frame_locator("iframe[title='reCAPTCHA']")
+            checkbox = self.page.frame_locator("iframe[title='reCAPTCHA']").first
             await checkbox.locator(".recaptcha-checkbox-border").click()
             return True
         except TimeoutError:
