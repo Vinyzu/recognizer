@@ -55,4 +55,4 @@ jobs:
         huggingface-cli download flavour/CLIP-ViT-B-16-DataComp.XL-s13B-b90K
         huggingface-cli download CIDAS/clipseg-rd64-refined
     - name: Test with PyTest
-      run: pytest
+      run: pytest --reruns 5 --only-rerun TimeoutError

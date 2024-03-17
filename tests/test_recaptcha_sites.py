@@ -118,7 +118,6 @@ async def test_bernsted_v2_explicit(botright_page: Page):
 
 
 @pytest.mark.asyncio
-@pytest.mark.flaky(reruns=5, only_rerun=["TimeoutError"])
 async def test_bernsted_v2_invisible_auto(botright_page: Page):
     challenger = AsyncChallenger(botright_page)
     # For slow Pytest Loading
@@ -133,7 +132,6 @@ async def test_bernsted_v2_invisible_auto(botright_page: Page):
 
 
 @pytest.mark.asyncio
-@pytest.mark.flaky(reruns=5, only_rerun=["TimeoutError"])
 async def test_bernsted_v2_invisible_explicit(botright_page: Page):
     challenger = AsyncChallenger(botright_page)
     # For slow Pytest Loading
@@ -148,7 +146,6 @@ async def test_bernsted_v2_invisible_explicit(botright_page: Page):
 
 
 @pytest.mark.asyncio
-@pytest.mark.flaky(reruns=5, only_rerun=["TimeoutError"])
 async def test_bernsted_v2_invisible_explicit_isolated(botright_page: Page):
     challenger = AsyncChallenger(botright_page)
     # For slow Pytest Loading
@@ -247,7 +244,6 @@ async def test_2captcha_v2(botright_page: Page):
 
 
 @pytest.mark.asyncio
-@pytest.mark.flaky(reruns=5, only_rerun=["TimeoutError"])
 @pytest.mark.skip(reason="No different challenge type, Skipping due to time complexity")
 async def test_2captcha_v2_invisible(botright_page: Page):
     challenger = AsyncChallenger(botright_page)
