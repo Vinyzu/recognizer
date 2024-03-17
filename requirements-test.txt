@@ -7,6 +7,6 @@ pytest-rerunfailures==14.0
 mypy==1.8.0
 types-setuptools==69.1.0.20240223
 botright==0.5.1
-playwright==1.40.0
+playwright==1.42.0
 black==24.1.1
 isort==5.13.2
