@@ -197,11 +197,11 @@ class ClipDetector:
         response = [False for _ in range(tiles_amount)]
         segment_label = self.area_captcha_labels[task_type]
 
-        inputs = detection_models.seg_processor(text=segment_label, images=[image], padding="max_length", return_tensors="pt")
+        inputs = detection_models.seg_processor(text=segment_label, images=[image], return_tensors="pt")
         with no_grad():
             outputs = detection_models.seg_model(**inputs)
 
-        heatmap = outputs.logits
+        heatmap = outputs.logits[0]
         # Get the normalized adjusted threshold for the heatmap
         adjusted_normalized_heatmap = (heatmap - heatmap.min()) / (heatmap.max() - heatmap.min()) * 2.5
         threshold = heatmap.max() - adjusted_normalized_heatmap.mean()
