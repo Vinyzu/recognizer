@@ -54,5 +54,6 @@ jobs:
         pip install -U "huggingface_hub[cli]"
         huggingface-cli download flavour/CLIP-ViT-B-16-DataComp.XL-s13B-b90K
         huggingface-cli download CIDAS/clipseg-rd64-refined
+      continue-on-error: true
     - name: Test with PyTest
       run: pytest --reruns 5 --only-rerun TimeoutError
