@@ -5,7 +5,7 @@ pytest==8.1.1
 pytest_asyncio==0.23.6
 pytest-rerunfailures==14.0
 mypy==1.9.0
-types-setuptools==69.2.0.20240317
+types-setuptools==70.0.0.20240524
 botright==0.5.1
 playwright==1.40.0
 black==24.4.0
