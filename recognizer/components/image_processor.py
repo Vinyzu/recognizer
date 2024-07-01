@@ -10,13 +10,12 @@ from typing import List, Tuple, Union
 
 import cv2
 from imageio.v2 import imread
-from numpy import concatenate, generic
-from numpy.typing import NDArray
+from numpy import concatenate
 
 from .detection_processor import calculate_approximated_coords
 
 
-def get_captcha_fields(img: NDArray[generic]) -> Tuple[List[bytes], List[Tuple[int, int]]]:
+def get_captcha_fields(img: cv2.typing.MatLike) -> Tuple[List[bytes], List[Tuple[int, int]]]:
     captcha_fields_with_sizes: List[Tuple[bytes, int, int, int]] = []
     captcha_fields: List[Tuple[bytes, int, int]] = []
 
@@ -68,7 +67,7 @@ def get_captcha_fields(img: NDArray[generic]) -> Tuple[List[bytes], List[Tuple[i
     )
 
 
-def split_image_into_tiles(img: NDArray[generic], tile_count: int) -> List[bytes]:
+def split_image_into_tiles(img: cv2.typing.MatLike, tile_count: int) -> List[bytes]:
     tiles = []
 
     # Get the dimensions of the image
@@ -94,7 +93,7 @@ def split_image_into_tiles(img: NDArray[generic], tile_count: int) -> List[bytes
     return tiles
 
 
-def create_image_grid(images: List[NDArray[generic]]) -> NDArray[generic]:
+def create_image_grid(images: List[cv2.typing.MatLike]) -> cv2.typing.MatLike:
     cv2_images = images
     tile_count_per_row = int(math.sqrt(len(cv2_images)))
 
@@ -139,7 +138,7 @@ def handle_single_image(single_image: Union[Path, bytes], area_captcha: bool) ->
     return images, coords
 
 
-def handle_multiple_images(images: List[bytes]) -> List[NDArray[generic]]:
+def handle_multiple_images(images: List[bytes]) -> List[cv2.typing.MatLike]:
     cv2_images = []
     for image in images:
         try:

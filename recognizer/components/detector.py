@@ -10,8 +10,7 @@ from pathlib import Path
 from typing import Callable, List, Optional, Sequence, Tuple, Union
 
 import cv2
-from numpy import generic, uint8
-from numpy.typing import NDArray
+from numpy import uint8
 from torch import no_grad, set_num_threads
 from transformers import CLIPModel, CLIPProcessor, CLIPSegForImageSegmentation, CLIPSegProcessor
 
@@ -102,7 +101,7 @@ class YoloDetector:
     def __init__(self) -> None:
         pass
 
-    def detect_image(self, image: NDArray[generic], tile_amount: int, task_type: str) -> List[bool]:
+    def detect_image(self, image: cv2.typing.MatLike, tile_amount: int, task_type: str) -> List[bool]:
         response = [False for _ in range(tile_amount)]
         height, width, _ = image.shape
         tiles_per_row = int(math.sqrt(tile_amount))
@@ -174,7 +173,7 @@ class ClipDetector:
     def __init__(self) -> None:
         pass
 
-    def clip_detect_vit(self, images: List[NDArray[generic]], task_type: str) -> List[bool]:
+    def clip_detect_vit(self, images: List[cv2.typing.MatLike], task_type: str) -> List[bool]:
         response = []
 
         inputs = detection_models.vit_processor(text=self.all_labels, images=images, return_tensors="pt", padding=True)
@@ -193,7 +192,7 @@ class ClipDetector:
 
         return response
 
-    def clipseg_detect_rd64(self, image: NDArray[generic], task_type: str, tiles_amount: int) -> List[bool]:
+    def clipseg_detect_rd64(self, image: cv2.typing.MatLike, task_type: str, tiles_amount: int) -> List[bool]:
         response = [False for _ in range(tiles_amount)]
         segment_label = self.area_captcha_labels[task_type]
 
@@ -228,7 +227,7 @@ class ClipDetector:
 
         return response
 
-    def detect_image(self, images: List[NDArray[generic]], task_type: str) -> List[bool]:
+    def detect_image(self, images: List[cv2.typing.MatLike], task_type: str) -> List[bool]:
         if len(images) == 9:
             return self.clip_detect_vit(images, task_type)
 
