@@ -57,4 +57,4 @@ jobs:
         huggingface-cli download CIDAS/clipseg-rd64-refined
       continue-on-error: true
     - name: Test with PyTest
-      run: pytest --reruns 5 --only-rerun TimeoutError
+      run: pytest --reruns 5 --only-rerun TimeoutError -v
