@@ -73,6 +73,10 @@ def calculate_segmentation_response(
             def is_tile_fully_enclosed(tile_corners, threshold_image):
                 for corner in tile_corners:
                     x, y = corner
+                    # Check if x, y are within the bounds of the threshold_image
+                    if not (0 <= x < threshold_image.shape[1] and 0 <= y < threshold_image.shape[0]):
+                        return False
+
                     # Check if the corner is inside the mask (non-zero pixel)
                     if threshold_image[y, x] == 0:  # 0 means the pixel is outside the contour
                         return False
