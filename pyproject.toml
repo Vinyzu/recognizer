@@ -31,3 +31,7 @@ line-length = 200
 py_version = 310
 line_length = 200
 multi_line_output = 7
+
+[tool.ruff]
+# Allow lines to be as long as 120.
+line-length = 200

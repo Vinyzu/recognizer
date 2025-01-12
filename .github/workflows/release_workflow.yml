@@ -1,0 +1,77 @@
+name: Release Workflow
+
+on:
+  workflow_dispatch:
+    inputs:
+      version:
+        description: 'Version to publish (optional)'
+        required: true
+
+permissions:
+  actions: none
+  attestations: none
+  checks: none
+  contents: write
+  deployments: none
+  id-token: write # For trusted Publishing
+  issues: none
+  discussions: none
+  packages: none
+  pages: none
+  pull-requests: none
+  repository-projects: none
+  security-events: none
+  statuses: none
+
+jobs:
+  release-workflow:
+    name: "Release Workflow, Release Automaticly with Patch Version Change or specify version"
+    runs-on: ubuntu-latest
+    environment:
+      name: pypi
+      url: https://pypi.org/p/recognizer
+    steps:
+      - uses: actions/checkout@v4
+      - name: Set up Python 3.11
+        uses: actions/setup-python@v4
+        with:
+          python-version: '3.11'
+
+      - name: Install dependencies
+        run: |
+          python -m pip install --upgrade pip
+          pip install build
+          pip install -r requirements.txt
+          pip install -e .
+          
+      - name: Update version in package
+        run: |
+          VERSION_INPUT="${{ github.event.inputs.version }}"
+          awk -v version="$VERSION_INPUT" '/^VERSION =/ { sub(/=.*/, "= \"" version "\"") } { print }' ./recognizer/__init__.py > temp && mv temp ./recognizer/__init__.py
+          echo "Updated version to $VERSION_INPUT"
+
+      - name: Verify version
+        run: |
+          VERSION_INPUT="${{ github.event.inputs.version }}"
+          if ! grep -q "^VERSION = \"$VERSION_INPUT\"" ./recognizer/__init__.py; then
+            echo "Version mismatch! Expected VERSION = \"$VERSION_INPUT\""
+            exit 1
+          fi
+          echo "Version verified successfully as $VERSION_INPUT"
+
+      - name: Build the library
+        run: |
+          python -m build
+
+      - name: Publish to PyPI
+        uses: pypa/gh-action-pypi-publish@release/v1
+        with:
+          verbose: true
+
+      - name: Commit and push version update
+        uses: stefanzweifel/git-auto-commit-action@v5
+        with:
+          commit_message: "Chore: Update Version to ${{ github.event.inputs.version }} [skip ci]"
+          file_pattern: "recognizer/__init__.py"
+          commit_user_name: reCognizer Actions Bot
+          commit_options: "--no-verify"

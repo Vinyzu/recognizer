@@ -1,17 +1,55 @@
+# ruff: noqa: F821
 from __future__ import annotations
 
+import base64
 import re
 from contextlib import suppress
-from typing import Optional, Union
+from typing import Optional, Type, Union
 
-from playwright.async_api import Error as PlaywrightError
-from playwright.async_api import FrameLocator, Page, Request, Route, TimeoutError
+import cv2
+from imageio.v3 import imread
+
+try:
+    from playwright.async_api import Error as PlaywrightError
+    from playwright.async_api import FrameLocator as PlaywrightFrameLocator
+    from playwright.async_api import Page as PlaywrightPage
+    from playwright.async_api import Request as PlaywrightRequest
+    from playwright.async_api import Route as PlaywrightRoute
+    from playwright.async_api import TimeoutError as PlaywrightTimeoutError
+except ImportError:
+    PlaywrightError: Type["Error"] = "Error"  # type: ignore
+    PlaywrightFrameLocator: Type["FrameLocator"] = "FrameLocator"  # type: ignore
+    PlaywrightPage: Type["Page"] = "Page"  # type: ignore
+    PlaywrightRequest: Type["Request"] = "Request"  # type: ignore
+    PlaywrightRoute: Type["Route"] = "Route"  # type: ignore
+    PlaywrightTimeoutError: Type["TimeoutError"] = "TimeoutError"  # type: ignore
+
+try:
+    from patchright.async_api import Error as PatchrightError
+    from patchright.async_api import FrameLocator as PatchrightFrameLocator
+    from patchright.async_api import Page as PatchrightPage
+    from patchright.async_api import Request as PatchrightRequest
+    from patchright.async_api import Route as PatchrightRoute
+    from patchright.async_api import TimeoutError as PatchrightTimeoutError
+except ImportError:
+    PatchrightError: Type["Error"] = "Error"  # type: ignore
+    PatchrightFrameLocator: Type["FrameLocator"] = "FrameLocator"  # type: ignore
+    PatchrightPage: Type["Page"] = "Page"  # type: ignore
+    PatchrightRequest: Type["Request"] = "Request"  # type: ignore
+    PatchrightRoute: Type["Route"] = "Route"  # type: ignore
+    PatchrightTimeoutError: Type["TimeoutError"] = "TimeoutError"  # type: ignore
 
 from recognizer import Detector
 
 
 class AsyncChallenger:
-    def __init__(self, page: Page, click_timeout: Optional[int] = None, retry_times: int = 15) -> None:
+    def __init__(
+        self,
+        page: Union[PlaywrightPage, PatchrightPage],
+        click_timeout: Optional[int] = None,
+        retry_times: int = 15,
+        optimize_click_order: Optional[bool] = True,
+    ) -> None:
         """
         Initialize a reCognizer AsyncChallenger instance with specified configurations.
 
@@ -19,10 +57,11 @@ class AsyncChallenger:
             page (Page): The Playwright Page to initialize on.
             click_timeout (int, optional): Click Timeouts between captcha-clicks.
             retry_times (int, optional): Maximum amount of retries before raising an Exception. Defaults to 15.
+            optimize_click_order (bool, optional): Whether to optimize the click order with the Travelling Salesman Problem. Defaults to True.
         """
         self.page = page
         self.routed_page = False
-        self.detector = Detector()
+        self.detector = Detector(optimize_click_order=optimize_click_order)
 
         self.click_timeout = click_timeout
         self.retry_times = retry_times
@@ -31,9 +70,14 @@ class AsyncChallenger:
         self.dynamic: bool = False
         self.captcha_token: Optional[str] = None
 
-    async def route_handler(self, route: Route, request: Request) -> None:
+    async def route_handler(
+        self,
+        route: Union[PlaywrightRoute, PatchrightRoute],
+        request: Union[PlaywrightRequest, PatchrightRequest],
+    ) -> None:
+        # Instant Fulfillment to save Time
         response = await route.fetch()
-        await route.fulfill(response=response)  # Instant Fulfillment to save Time
+        await route.fulfill(response=response)  # type: ignore[arg-type]
         response_text = await response.text()
         assert response_text
 
@@ -49,11 +93,11 @@ class AsyncChallenger:
         if self.captcha_token:
             return self.captcha_token
 
-        with suppress(PlaywrightError):
+        with suppress(PlaywrightError, PatchrightError):
             captcha_token: str = await self.page.evaluate("grecaptcha.getResponse()")
             return captcha_token
 
-        with suppress(PlaywrightError):
+        with suppress(PlaywrightError, PatchrightError):
             enterprise_captcha_token: str = await self.page.evaluate("grecaptcha.enterprise.getResponse()")
             return enterprise_captcha_token
 
@@ -64,7 +108,7 @@ class AsyncChallenger:
         label_obj = captcha_frame.locator("//strong")
         try:
             await label_obj.wait_for(state="visible", timeout=10000)
-        except TimeoutError:
+        except (PlaywrightTimeoutError, PatchrightTimeoutError):
             return False
 
         return await label_obj.is_visible()
@@ -75,12 +119,34 @@ class AsyncChallenger:
             checkbox = self.page.frame_locator("iframe[title='reCAPTCHA']").first
             await checkbox.locator(".recaptcha-checkbox-border").click()
             return True
-        except TimeoutError:
+        except (PlaywrightError, PatchrightError):
             return False
 
+    async def adjust_coordinates(self, coordinates, img_bytes):
+        image: cv2.typing.MatLike = imread(img_bytes)
+        width, height = image.shape[1], image.shape[0]
+        try:
+            assert self.page.viewport_size
+            page_width, page_height = (
+                self.page.viewport_size["width"],
+                self.page.viewport_size["height"],
+            )
+        except AssertionError:
+            page_width = await self.page.evaluate("window.innerWidth")
+            page_height = await self.page.evaluate("window.innerHeight")
+
+        x_ratio = page_width / width
+        y_ratio = page_height / height
+
+        return [(int(x * x_ratio), int(y * y_ratio)) for x, y in coordinates]
+
     async def detect_tiles(self, prompt: str, area_captcha: bool) -> bool:
-        image = await self.page.screenshot(full_page=True)
-        response, coordinates = self.detector.detect(prompt, image, area_captcha=area_captcha)
+        client = await self.page.context.new_cdp_session(self.page)  # type: ignore[arg-type]
+        image = await client.send("Page.captureScreenshot")
+
+        image_base64 = base64.b64decode(image["data"].encode())
+        response, coordinates = self.detector.detect(prompt, image_base64, area_captcha=area_captcha)
+        coordinates = await self.adjust_coordinates(coordinates, image_base64)
 
         if not any(response):
             return False
@@ -92,27 +158,32 @@ class AsyncChallenger:
 
         return True
 
-    async def load_captcha(self, captcha_frame: Optional[FrameLocator] = None, reset: Optional[bool] = False) -> Union[str, bool]:
+    async def load_captcha(
+        self,
+        captcha_frame: Optional[Union[PlaywrightFrameLocator, PatchrightFrameLocator]] = None,
+        reset: Optional[bool] = False,
+    ) -> Union[str, bool]:
         # Retrying
         self.retried += 1
         if self.retried >= self.retry_times:
             raise RecursionError(f"Exceeded maximum retry times of {self.retry_times}")
 
+        TypedTimeoutError = PatchrightTimeoutError if isinstance(self.page, PatchrightPage) else PlaywrightTimeoutError
         if not await self.check_captcha_visible():
             if captcha_token := await self.check_result():
                 return captcha_token
             elif not await self.click_checkbox():
-                raise TimeoutError("Invisible reCaptcha Timed Out.")
+                raise TypedTimeoutError("Invisible reCaptcha Timed Out.")
 
-        assert await self.check_captcha_visible(), TimeoutError("[ERROR] reCaptcha Challenge is not visible.")
+        assert await self.check_captcha_visible(), TypedTimeoutError("[ERROR] reCaptcha Challenge is not visible.")
 
         # Clicking Reload Button
         if reset:
-            assert isinstance(captcha_frame, FrameLocator)
+            assert isinstance(captcha_frame, (PlaywrightFrameLocator, PatchrightFrameLocator))
             try:
                 reload_button = captcha_frame.locator("#recaptcha-reload-button")
                 await reload_button.click()
-            except TimeoutError:
+            except (PlaywrightTimeoutError, PatchrightTimeoutError):
                 return await self.load_captcha()
 
             # Resetting Values
@@ -142,6 +213,7 @@ class AsyncChallenger:
             await self.page.wait_for_timeout(1000)
         else:
             await self.load_captcha(captcha_frame, reset=True)
+            await self.page.wait_for_timeout(2000)
             return await self.handle_recaptcha()
 
         # Detecting Images and Clicking right Coordinates
@@ -154,14 +226,16 @@ class AsyncChallenger:
                 result_clicked = await self.detect_tiles(prompt, area_captcha)
         elif not result_clicked:
             await self.load_captcha(captcha_frame, reset=True)
+            await self.page.wait_for_timeout(2000)
             return await self.handle_recaptcha()
 
         # Submit challenge
         try:
             submit_button = captcha_frame.locator("#recaptcha-verify-button")
             await submit_button.click()
-        except TimeoutError:
+        except (PlaywrightTimeoutError, PatchrightTimeoutError):
             await self.load_captcha(captcha_frame, reset=True)
+            await self.page.wait_for_timeout(2000)
             return await self.handle_recaptcha()
 
         # Waiting for captcha_token for 5 seconds
@@ -172,12 +246,13 @@ class AsyncChallenger:
             await self.page.wait_for_timeout(1000)
 
         # Check if error occurred whilst solving
-        incorrect = self.page.locator("[class='rc-imageselect-incorrect-response']")
-        errors = self.page.locator("[class *= 'rc-imageselect-error']")
+        incorrect = captcha_frame.locator("[class='rc-imageselect-incorrect-response']")
+        errors = captcha_frame.locator("[class *= 'rc-imageselect-error']")
         if await incorrect.is_visible() or any([await error.is_visible() for error in await errors.all()]):
             await self.load_captcha(captcha_frame, reset=True)
 
         # Retrying
+        await self.page.wait_for_timeout(2000)
         return await self.handle_recaptcha()
 
     async def solve_recaptcha(self) -> Union[str, bool]:
@@ -192,6 +267,7 @@ class AsyncChallenger:
         # Resetting Values
         self.dynamic = False
         self.captcha_token = ""
+        self.retried = 0
 
         # Checking if Page needs to be routed
         if not self.routed_page:

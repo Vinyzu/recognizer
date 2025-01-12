@@ -8,7 +8,7 @@ from recognizer.agents.playwright import SyncChallenger
 
 
 def test_sync_challenger(sync_page: Page):
-    challenger = SyncChallenger(sync_page)
+    challenger = SyncChallenger(sync_page, click_timeout=1000)
     # For slow Pytest Loading
     challenger.detector.detection_models.check_loaded()
 

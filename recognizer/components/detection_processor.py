@@ -1,11 +1,20 @@
 import math
+from itertools import permutations
 from typing import List, Tuple, Union
 
 from numpy import generic
 from numpy.typing import NDArray
+from scipy.spatial.distance import cdist
 
 
-def calculate_segmentation_response(mask: Union[NDArray[generic], List[Tuple[int, int]]], response: List[bool], tile_width: int, tile_height: int, tiles_per_row: int) -> List[bool]:
+def calculate_segmentation_response(
+    mask: Union[NDArray[generic], List[Tuple[int, int]]],
+    response: List[bool],
+    tile_width: int,
+    tile_height: int,
+    tiles_per_row: int,
+    threshold_image=None,
+) -> List[bool]:
     for coord in mask:
         mask_point_x, mask_point_y = tuple(coord)
 
@@ -21,11 +30,11 @@ def calculate_segmentation_response(mask: Union[NDArray[generic], List[Tuple[int
         if response[tile_index]:
             continue
 
-        # Calculate the boundary for the 5% area within the tile
-        boundary_x = tile_width * 0.05
-        boundary_y = tile_height * 0.05
+        # Calculate the boundary for the 8% area within the tile
+        boundary_x = tile_width * 0.08
+        boundary_y = tile_height * 0.08
 
-        # Check if the point is within the 5% boundary of the tile area
+        # Check if the point is within the 8% boundary of the tile area
         # fmt: off
         within_boundary = (
                 boundary_x <= coord[1] % tile_width <= tile_width - boundary_x
@@ -36,10 +45,50 @@ def calculate_segmentation_response(mask: Union[NDArray[generic], List[Tuple[int
         if within_boundary:
             response[tile_index] = True
 
+    if threshold_image is None:
+        return response
+
+    # Check for tiles that are completely enclosed by the mask
+    for row in range(tiles_per_row):
+        for col in range(tiles_per_row):
+            tile_index = row * tiles_per_row + col
+            if response[tile_index]:
+                continue
+
+            # Calculate the corners of the current tile
+            tile_x_min = col * tile_width
+            tile_x_max = tile_x_min + tile_width
+            tile_y_min = row * tile_height
+            tile_y_max = tile_y_min + tile_height
+
+            # Check if all corners of the tile are inside the mask
+            corners = [
+                (tile_x_min, tile_y_min),
+                (tile_x_max, tile_y_min),
+                (tile_x_min, tile_y_max),
+                (tile_x_max, tile_y_max),
+            ]
+
+            # Function to check if all corners are inside the mask
+            def is_tile_fully_enclosed(tile_corners, threshold_image):
+                for corner in tile_corners:
+                    x, y = corner
+                    # Check if the corner is inside the mask (non-zero pixel)
+                    if threshold_image[y, x] == 0:  # 0 means the pixel is outside the contour
+                        return False
+                return True
+
+            response[tile_index] = is_tile_fully_enclosed(corners, threshold_image)
+
     return response
 
 
-def get_tiles_in_bounding_box(img: NDArray[generic], tile_amount: int, point_start: Tuple[int, int], point_end: Tuple[int, int]) -> List[bool]:
+def get_tiles_in_bounding_box(
+    img: NDArray[generic],
+    tile_amount: int,
+    point_start: Tuple[int, int],
+    point_end: Tuple[int, int],
+) -> List[bool]:
     tiles_in_bbox = []
     # Define the size of the original image
     height, width, _ = img.shape
@@ -94,3 +143,26 @@ def calculate_approximated_coords(grid_width: int, grid_height: int, tile_amount
             middle_points.append((middle_x, middle_y))
 
     return middle_points
+
+
+def find_lowest_distance(start, coordinates):
+    # Optimizing Click Order with Travelling Salesman Problem
+    points = [start] + coordinates
+    distances = cdist(points, points, metric="euclidean")
+
+    num_points = len(points)
+    min_distance = float("inf")
+    best_path = None
+
+    for perm in permutations(range(1, num_points)):  # Permute only the other points
+        path = [0] + list(perm)  # Always start at the starting point
+        distance = sum(distances[path[i], path[i + 1]] for i in range(len(path) - 1))
+
+        if distance < min_distance:
+            min_distance = distance
+            best_path = path
+
+    assert best_path
+    # Convert path indices back to coordinates
+    best_coordinates = [points[i] for i in best_path]
+    return best_coordinates

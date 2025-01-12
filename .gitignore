@@ -150,3 +150,7 @@ cython_debug/
 
 # YOLO
 *.pt
+
+user_data/
+
+.DS_Store

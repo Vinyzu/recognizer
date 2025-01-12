@@ -17,14 +17,12 @@ jobs:
         run: |
           python -m pip install --upgrade pip
           pip install -r requirements-test.txt
-      - name: (Linting) isort
-        run: isort . --check-only
-      - name: (Linting) Flake8
-        run: flake8 .
-      - name: (Linting) MyPy
+      - name: (Linting) Ruff
+        run: ruff check .
+      - name: (Formatting) Ruff
+        run: ruff format .
+      - name: (Type-Checking) MyPy
         run: mypy .
-      - name: (Linting) Black
-        run: black . --check
 
   Build:
     strategy:
@@ -47,8 +45,10 @@ jobs:
         python -c "import os; os.environ['TOKENIZERS_PARALLELISM'] = 'false'"
     - name: Install Chrome Browser
       uses: browser-actions/setup-chrome@v1
-    - name: Install Chromium Driver
+    - name: Install Playwright Chromium Driver
       run: python -m playwright install chromium
+    - name: Install Patchright Chromium Driver
+      run: python -m patchright install chromium
     - name: Install HuggingFace Models
       run: |
         pip install -U "huggingface_hub[cli]"

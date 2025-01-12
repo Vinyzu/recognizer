@@ -15,6 +15,7 @@ def test_full_page_screenshot(detector: Detector):
 
     # Response Correctness
     assert sum(response) == len(coordinates)
+    assert response == [True, True, False, False, True, False, False, False, False]
 
 
 def test_only_captcha(detector: Detector):
@@ -27,6 +28,24 @@ def test_only_captcha(detector: Detector):
 
     # Response Correctness
     assert sum(response) == len(coordinates)
+    assert response == [
+        True,
+        True,
+        True,
+        False,
+        True,
+        True,
+        True,
+        False,
+        False,
+        True,
+        True,
+        False,
+        False,
+        False,
+        False,
+        False,
+    ]
 
 
 def test_area_yolo_captcha(detector: Detector):
@@ -39,6 +58,24 @@ def test_area_yolo_captcha(detector: Detector):
 
     # Response Correctness
     assert sum(response) == len(coordinates)
+    assert response == [
+        False,
+        True,
+        True,
+        False,
+        False,
+        True,
+        True,
+        False,
+        False,
+        True,
+        True,
+        False,
+        False,
+        True,
+        True,
+        False,
+    ]
 
 
 def test_area_clip_captcha(detector: Detector):
@@ -51,6 +88,24 @@ def test_area_clip_captcha(detector: Detector):
 
     # Response Correctness
     assert sum(response) == len(coordinates)
+    assert response == [
+        True,
+        True,
+        True,
+        True,
+        True,
+        True,
+        True,
+        False,
+        False,
+        False,
+        False,
+        False,
+        False,
+        False,
+        False,
+        False,
+    ]
 
 
 def test_classify_yolo_captcha(detector: Detector):
@@ -63,6 +118,7 @@ def test_classify_yolo_captcha(detector: Detector):
 
     # Response Correctness
     assert sum(response) == len(coordinates)
+    assert response == [False, False, False, True, False, False, True, True, False]
 
 
 def test_classify_clip_captcha(detector: Detector):
@@ -75,3 +131,4 @@ def test_classify_clip_captcha(detector: Detector):
 
     # Response Correctness
     assert sum(response) == len(coordinates)
+    assert response == [True, True, False, True, False, False, False, False, True]

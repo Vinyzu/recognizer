@@ -10,7 +10,7 @@ from recognizer.agents.playwright import AsyncChallenger
 
 @pytest.mark.asyncio
 async def test_async_challenger(async_page: Page):
-    challenger = AsyncChallenger(async_page)
+    challenger = AsyncChallenger(async_page, click_timeout=1000)
     # For slow Pytest Loading
     challenger.detector.detection_models.check_loaded()
 

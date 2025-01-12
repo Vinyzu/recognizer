@@ -10,12 +10,30 @@ from pathlib import Path
 from typing import Callable, List, Optional, Sequence, Tuple, Union
 
 import cv2
+import numpy as np
+import torch
+import torch.nn.functional as F
 from numpy import uint8
+from scipy.ndimage import label
 from torch import no_grad, set_num_threads
-from transformers import CLIPModel, CLIPProcessor, CLIPSegForImageSegmentation, CLIPSegProcessor
+from transformers import (
+    CLIPModel,
+    CLIPProcessor,
+    CLIPSegForImageSegmentation,
+    CLIPSegProcessor,
+)
 
-from .detection_processor import calculate_approximated_coords, calculate_segmentation_response, get_tiles_in_bounding_box
-from .image_processor import create_image_grid, handle_multiple_images, handle_single_image
+from .detection_processor import (
+    calculate_approximated_coords,
+    calculate_segmentation_response,
+    find_lowest_distance,
+    get_tiles_in_bounding_box,
+)
+from .image_processor import (
+    create_image_grid,
+    handle_multiple_images,
+    handle_single_image,
+)
 from .prompt_handler import split_prompt_message
 
 warnings.filterwarnings("ignore", category=UserWarning, message="TypedStorage is deprecated")
@@ -44,7 +62,7 @@ class DetectionModels:
     def _load_yolo_detector(self):
         from ultralytics import YOLO
 
-        self.yolo_model = YOLO("yolov8m-seg.pt")
+        self.yolo_model = YOLO("yolo11m-seg.pt")
 
     def _load_vit_model(self):
         self.vit_model = CLIPModel.from_pretrained("flavour/CLIP-ViT-B-16-DataComp.XL-s13B-b90K")
@@ -139,13 +157,15 @@ class ClipDetector:
 
     all_labels = ["a bicycle", "a boat", "a bus", "a car", "a fire hydrant", "a motorcycle", "a traffic light",  # YOLO TASKS
                   "the front or bottom or side of a concrete or steel bridge supported by concrete pillars over a street or highway",
-                  "a chimney on the roof or top of a house or building",
-                  "white/yellow stripes or white/yellow lines of a crosswalk stretching over a gray ground of a street",
-                  "a green or gray mountain or grassy hill in the background of a landscape",  # Quite Bad Accuracy, might need another approach
-                  "a palm tree behind a rooftop of a house or next to a street stretching into the sky",
-                  "a concrete or steel or wooden stairway or stairs or steps with railings on its side in front of a house or building leading to the street",
+                  "A close-up of a chimney on a house, with rooftops and ceiling below",
+                  "striped pedestrian crossing with white/yellow of a crosswalk stretching over a gray ground of a street",
+                  "An californian green or grey landscape with trees or a bridge or street or road connecting two mountain slopes",
+                  "A feather-like warm palm growing behind to a tiled rooftop, with a californian road or street",
+                  "a stairway for pedestrians in front of a house or building leading to a walkway",
                   "a tractor or agricultural vehicle driving on a street or field",
-                  "a taxi or a yellow car"]
+                  "a taxi or a yellow car",
+                  "a house wall",
+                  "an empty street"]
     # fmt: on
 
     thresholds = {
@@ -154,18 +174,18 @@ class ClipDetector:
         "crosswalk": 0.8879293048381806,
         "mountain": 0.5551278884819476,
         "palm tree": 0.8093279512040317,
-        "stair": 0.7312694561691023,
+        "stair": 0.9112694561691023,
         "tractor": 0.9385110986077537,
         "taxi": 0.7967491503432393,
     }
 
     area_captcha_labels = {
-        "bridge": "the front or bottom or side of a concrete or steel bridge supported by concrete pillars",
-        "chimney": "a chimney on the roof or top of a house or building",
-        "crosswalk": "white/yellow stripes or white/yellow lines of a crosswalk",
-        "mountain": "a green or gray mountain or grassy hill",
-        "palm tree": "a palm tree",
-        "stair": "a concrete or steel or wooden stairway or stairs or steps with railings on its side",
+        "bridge": "A detailed perspective of a concrete bridge with cylindrical and rectangular supports spanning over a wide highway.",
+        "chimney": "A close-up of a chimney on a house, with rooftops and ceiling below",
+        "crosswalk": "striped pedestrian crossing with white/yellow of a crosswalk stretching over a gray ground of a street",
+        "mountain": "An californian green or grey landscape with trees or a bridge or street or road connecting two mountain slopes",
+        "palm tree": "A feather-like warm palm growing behind to a tiled rooftop, with a californian road or street",
+        "stair": "a stairway for pedestrians in front of a house or building leading to a walkway",
         "tractor": "a tractor or agricultural vehicle",
         "taxi": "a yellow car or taxi",
     }
@@ -175,7 +195,6 @@ class ClipDetector:
 
     def clip_detect_vit(self, images: List[cv2.typing.MatLike], task_type: str) -> List[bool]:
         response = []
-
         inputs = detection_models.vit_processor(text=self.all_labels, images=images, return_tensors="pt", padding=True)
         with no_grad():
             outputs = detection_models.vit_model(**inputs)
@@ -186,7 +205,7 @@ class ClipDetector:
         for result in results:
             task_index = self.plain_labels.index(task_type)
             prediction = result[task_index]
-            choice = prediction >= (self.thresholds[task_type] - 0.4)
+            choice = prediction >= (self.thresholds[task_type] - 0.2)
 
             response.append(choice)
 
@@ -201,19 +220,55 @@ class ClipDetector:
             outputs = detection_models.seg_model(**inputs)
 
         heatmap = outputs.logits[0]
-        # Get the normalized adjusted threshold for the heatmap
-        adjusted_normalized_heatmap = (heatmap - heatmap.min()) / (heatmap.max() - heatmap.min()) * 2.5
-        threshold = heatmap.max() - adjusted_normalized_heatmap.mean()
-        # Create the Threshold mask for the Heatmap
-        threshold_mask = (heatmap > threshold).float()
+
+        # Step 1: Normalize the heatmap
+        heatmap = torch.sigmoid(heatmap)  # Apply sigmoid if logits are raw
+        normalized_heatmap = (heatmap - heatmap.min()) / (heatmap.max() - heatmap.min())
+
+        # Step 2: Threshold the heatmap to find hotspots
+        threshold = self.thresholds[task_type] - 0.2  # Adjust this value based on your needs
+        hotspot_mask = (normalized_heatmap > threshold).float()
+
+        # Step 3: Remove small specs from the heatmap
+        hotspot_mask_np = hotspot_mask.cpu().numpy()  # Convert to NumPy for processing
+        labeled_array, num_features = label(hotspot_mask_np)  # Label connected regions
+        min_area = 0.005 * hotspot_mask_np.size  # 0.5% of the image area
+
+        # Remove regions smaller than the minimum area
+        cleaned_mask = np.zeros_like(hotspot_mask_np)
+        for region_label in range(1, num_features + 1):
+            region_area = np.sum(labeled_array == region_label)
+            if region_area >= min_area:
+                cleaned_mask[labeled_array == region_label] = 1
+
+        # Convert back to PyTorch tensor
+        hotspot_mask_cleaned = torch.from_numpy(cleaned_mask).float()
+
+        # Step 4: Resize the cleaned mask to match the original image dimensions
+        mask_resized = (
+            F.interpolate(
+                hotspot_mask_cleaned.unsqueeze(0).unsqueeze(0),  # Add batch and channel dimensions
+                size=(
+                    image.shape[0],
+                    image.shape[1],
+                ),  # Match height and width of the input image
+                mode="bilinear",
+                align_corners=False,
+            )
+            .squeeze(0)
+            .squeeze(0)
+        )  # Remove batch and channel dimensions
 
         # Getting Tile Size from threshold mask
         tiles_per_row = int(math.sqrt(tiles_amount))
-        mask_width, mask_height = heatmap.shape
-        tile_width, tile_height = (mask_width // tiles_per_row, mask_height // tiles_per_row)
+        mask_width, mask_height = mask_resized.shape
+        tile_width, tile_height = (
+            mask_width // tiles_per_row,
+            mask_height // tiles_per_row,
+        )
 
         # Creating Contours of Threshold Mask
-        threshold_image = threshold_mask.numpy().astype(uint8)
+        threshold_image = mask_resized.numpy().astype(uint8)
         contours, _ = cv2.findContours(threshold_image, cv2.RETR_EXTERNAL, cv2.CHAIN_APPROX_SIMPLE)
 
         new_contours = []
@@ -223,7 +278,14 @@ class ClipDetector:
             if area > 100:
                 new_contours.append(contour)
                 mask = contour.squeeze()
-                response = calculate_segmentation_response(mask, response, tile_width, tile_height, tiles_per_row)
+                response = calculate_segmentation_response(
+                    mask,
+                    response,
+                    tile_width,
+                    tile_height,
+                    tiles_per_row,
+                    threshold_image,
+                )
 
         return response
 
@@ -259,10 +321,15 @@ class Detector:
 
     # fmt: on
 
-    def __init__(self) -> None:
+    def __init__(self, optimize_click_order: Optional[bool] = True) -> None:
         """
         Spawn a new reCognizer Detector Instance
+
+        Args:
+            optimize_click_order (bool, optional): Whether to optimize the click order with the Travelling Salesman Problem. Defaults to True.
         """
+        self.optimize_click_order = optimize_click_order
+
         self.detection_models: DetectionModels = detection_models
         self.yolo_detector = YoloDetector()
         self.clip_detector = ClipDetector()
@@ -270,11 +337,18 @@ class Detector:
     def detect(
         self,
         prompt: str,
-        images: Union[Path, Union[PathLike[str], str], bytes, Sequence[Path], Sequence[Union[PathLike[str], str]], Sequence[bytes]],
+        images: Union[
+            Path,
+            Union[PathLike[str], str],
+            bytes,
+            Sequence[Path],
+            Sequence[Union[PathLike[str], str]],
+            Sequence[bytes],
+        ],
         area_captcha: Optional[bool] = None,
     ) -> Tuple[List[bool], List[Tuple[int, int]]]:
         """
-        Create a new Botright browser instance with specified configurations.
+        Solves a reCaptcha Task with the given prompt and images.
 
         Args:
             prompt (str): The prompt name/sentence of the captcha (e.g. "Select all images with crosswalks" / "crosswalk").
@@ -345,5 +419,9 @@ class Detector:
             if result:
                 x, y = coordinates[i]
                 good_coordinates.append((x + random.randint(-25, 25), y + random.randint(-25, 25)))
+
+        # Optimizing Click Order with Travelling Salesman Problem
+        if self.optimize_click_order and len(good_coordinates) > 2:
+            good_coordinates = find_lowest_distance(good_coordinates[0], good_coordinates[1:])
 
         return response, good_coordinates

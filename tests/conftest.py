@@ -1,14 +1,7 @@
-from typing import AsyncGenerator, Generator
-
-import botright
 import pytest
 import pytest_asyncio
-from botright.extended_typing import BrowserContext as BotrightBrowser
-from botright.extended_typing import Page as BotrightPage
-from playwright.async_api import Page as AsyncPage
-from playwright.async_api import async_playwright
-from playwright.sync_api import Page as SyncPage
-from playwright.sync_api import sync_playwright
+from patchright.async_api import async_playwright
+from patchright.sync_api import sync_playwright
 
 from recognizer import Detector
 
@@ -20,41 +13,44 @@ def detector() -> Detector:
 
 
 @pytest.fixture
-def sync_page() -> Generator[SyncPage, None, None]:
-    with sync_playwright() as p:
-        browser = p.chromium.launch(headless=True)
-        context = browser.new_context(locale="en-US")
-        page = context.new_page()
-
-        yield page
+def sync_playwright_object():
+    with sync_playwright() as playwright_object:
+        yield playwright_object
 
 
-@pytest_asyncio.fixture
-async def async_page() -> AsyncGenerator[AsyncPage, None]:
-    async with async_playwright() as p:
-        browser = await p.chromium.launch(headless=True)
-        context = await browser.new_context(locale="en-US")
-        page = await context.new_page()
+@pytest.fixture
+def sync_browser(sync_playwright_object):
+    browser = sync_playwright_object.chromium.launch_persistent_context(user_data_dir="./user_data", channel="chrome", headless=True, no_viewport=True, locale="en-US")
 
-        yield page
+    yield browser
+    browser.close()
 
 
-@pytest_asyncio.fixture
-async def botright_client():
-    botright_client = await botright.Botright(headless=True)
-    yield botright_client
-    await botright_client.close()
+@pytest.fixture
+def sync_page(sync_browser):
+    page = sync_browser.new_page()
+
+    yield page
+    page.close()
 
 
 @pytest_asyncio.fixture
-async def browser(botright_client, **launch_arguments) -> BotrightBrowser:
-    browser = await botright_client.new_browser(**launch_arguments)
+async def async_playwright_object():
+    async with async_playwright() as playwright_object:
+        yield playwright_object
+
+
+@pytest_asyncio.fixture
+async def async_browser(async_playwright_object):
+    browser = await async_playwright_object.chromium.launch_persistent_context(user_data_dir="./user_data", channel="chrome", headless=True, no_viewport=True, locale="en-US")
+
     yield browser
     await browser.close()
 
 
 @pytest_asyncio.fixture
-async def botright_page(browser) -> BotrightPage:
-    page = await browser.new_page()
+async def async_page(async_browser):
+    page = await async_browser.new_page()
+
     yield page
     await page.close()

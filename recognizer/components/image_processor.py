@@ -15,7 +15,9 @@ from numpy import concatenate
 from .detection_processor import calculate_approximated_coords
 
 
-def get_captcha_fields(img: cv2.typing.MatLike) -> Tuple[List[bytes], List[Tuple[int, int]]]:
+def get_captcha_fields(
+    img: cv2.typing.MatLike,
+) -> Tuple[List[bytes], List[Tuple[int, int]]]:
     captcha_fields_with_sizes: List[Tuple[bytes, int, int, int]] = []
     captcha_fields: List[Tuple[bytes, int, int]] = []
 

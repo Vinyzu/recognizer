@@ -1,7 +1,7 @@
-setuptools==69.2.0
-opencv-python~=4.9.0.80
-imageio~=2.34.0
-ultralytics~=8.2.2
-transformers~=4.40.0
-numpy~=1.26.4
-playwright==1.42.0
+setuptools~=75.8.0
+opencv-python~=4.10.0.84
+imageio~=2.36.1
+ultralytics~=8.3.59
+transformers~=4.48.0
+playwright~=1.49.1
+patchright~=1.49.1
