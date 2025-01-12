@@ -1,8 +1,3 @@
-# reCognizer v1.4
-![Tests & Linting](https://github.com/Vinyzu/recognizer/actions/workflows/ci.yml/badge.svg)
-[![](https://img.shields.io/pypi/v/recognizer.svg?color=1182C3)](https://pypi.org/project/recognizer/)
-[![Downloads](https://static.pepy.tech/badge/recognizer)](https://pepy.tech/project/recognizer)
-
 <h1 align="center">
     🎭 reCognizer
 </h1>

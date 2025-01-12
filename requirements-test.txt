@@ -1,6 +1,6 @@
 # This requirements are for development and testing only, not for production.
 pytest~=8.3.4
-pytest_asyncio~=0.24.0
+pytest_asyncio~=0.25.2
 pytest-rerunfailures~=15.0
 mypy~=1.14.1
 ruff~=0.9.1
