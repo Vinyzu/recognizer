@@ -144,6 +144,14 @@ asyncio.run(main())
 
 ---
 
+## Disclaimer
+
+This repository is provided for **educational purposes only**. \
+No warranties are provided regarding accuracy, completeness, or suitability for any purpose. **Use at your own risk**—the authors and maintainers assume **no liability** for **any damages**, **legal issues**, or **warranty breaches** resulting from use, modification, or distribution of this code.\
+**Any misuse or legal violations are the sole responsibility of the user**. 
+
+---
+
 ![Version](https://img.shields.io/pypi/v/reCognizer?display_name=release&label=reCognizer)
 ![License](https://img.shields.io/badge/License-GNU%20GPL-green)
 ![Python](https://img.shields.io/badge/Python-v3.x-lightgrey)

@@ -3,7 +3,7 @@ from __future__ import annotations
 from contextlib import suppress
 
 import pytest
-from botright.extended_typing import Page
+from patchright.async_api import Page
 
 from recognizer.agents.playwright import AsyncChallenger
 
