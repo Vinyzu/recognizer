@@ -13,14 +13,18 @@ jobs:
         uses: actions/setup-python@v4
         with:
           python-version: '3.11'
+
       - name: Install dependencies
         run: |
           python -m pip install --upgrade pip
           pip install -r requirements-test.txt
+
       - name: (Linting) Ruff
         run: ruff check .
+
       - name: (Formatting) Ruff
         run: ruff format .
+
       - name: (Type-Checking) MyPy
         run: mypy .
 
@@ -31,30 +35,68 @@ jobs:
         python-version: ['3.9', '3.10', '3.11', '3.12']
 
     runs-on: ${{ matrix.os }}
-    continue-on-error: true
     steps:
     - uses: actions/checkout@v4
     - name: Set up Python ${{ matrix.python-version }}
       uses: actions/setup-python@v4
       with:
         python-version: ${{ matrix.python-version }}
+
     - name: Install dependencies
       run: |
         python -m pip install --upgrade pip
         pip install -r requirements-test.txt
         pip install -e .
         python -c "import os; os.environ['TOKENIZERS_PARALLELISM'] = 'false'"
+
     - name: Install Chrome Browser
       uses: browser-actions/setup-chrome@v1
+
     - name: Install Playwright Chromium Driver
       run: python -m playwright install chromium
+
     - name: Install Patchright Chromium Driver
       run: python -m patchright install chromium
+
     - name: Install HuggingFace Models
       run: |
         pip install -U "huggingface_hub[cli]"
         huggingface-cli download flavour/CLIP-ViT-B-16-DataComp.XL-s13B-b90K
         huggingface-cli download CIDAS/clipseg-rd64-refined
-      continue-on-error: true
+
     - name: Test with PyTest
-      run: pytest --reruns 5 --only-rerun TimeoutError -v
+      run: pytest --reruns 5 --only-rerun TimeoutError -v --ignore tests/test_recaptcha_sites.py
+
+  Test:
+    runs-on: windows-latest
+    steps:
+      - uses: actions/checkout@v4
+      - name: Set up Python 3.11
+        uses: actions/setup-python@v4
+        with:
+          python-version: '3.11'
+
+      - name: Install dependencies
+        run: |
+          python -m pip install --upgrade pip
+          pip install -r requirements-test.txt
+          pip install -e .
+          python -c "import os; os.environ['TOKENIZERS_PARALLELISM'] = 'false'"
+
+      - name: Install Chrome Browser
+        uses: browser-actions/setup-chrome@v1
+
+      - name: Install Playwright Chromium Driver
+        run: python -m playwright install chromium
+
+      - name: Install Patchright Chromium Driver
+        run: python -m patchright install chromium
+
+      - name: Install HuggingFace Models
+        run: |
+          pip install -U "huggingface_hub[cli]"
+          huggingface-cli download flavour/CLIP-ViT-B-16-DataComp.XL-s13B-b90K
+          huggingface-cli download CIDAS/clipseg-rd64-refined
+
+      - name: Test with PyTest
+        run: pytest --reruns 5 --only-rerun TimeoutError -v tests/test_recaptcha_sites.py
