@@ -2,7 +2,7 @@
 pytest~=8.3.4
 pytest_asyncio~=0.25.2
 pytest-rerunfailures~=15.0
-mypy~=1.14.1
+mypy~=1.17.1
 ruff~=0.9.1
 types-setuptools~=75.8.0.20250110
 # botright~=0.5.1
