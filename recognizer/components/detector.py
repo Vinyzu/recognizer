@@ -38,6 +38,7 @@ from .prompt_handler import split_prompt_message
 
 warnings.filterwarnings("ignore", category=UserWarning, message="TypedStorage is deprecated")
 
+from deep_translator import GoogleTranslator
 
 class DetectionModels:
     def __init__(self) -> None:
@@ -365,6 +366,7 @@ class Detector:
         # Making best guess if its area_captcha if user did not specify
         area_captcha = "square" in prompt if area_captcha is None else area_captcha
         label = split_prompt_message(prompt)
+        label = GoogleTranslator(source='auto', target='en').translate(label)
 
         if label not in self.challenge_alias:
             print(f"[ERROR] Types of challenges of label {label} not yet scheduled (Prompt: {prompt}).")
