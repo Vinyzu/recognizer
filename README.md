@@ -22,25 +22,52 @@
 
 #### Note: You Should use an undetected browser engine like [Patchright](https://github.com/Kaliiiiiiiiii-Vinyzu/patchright-python) or [Botright](https://github.com/Vinyzu/Botright) to solve the Captchas consistently. <br>  reCaptcha detects normal Playwright easily and you probably wont get any successful solves despite correct recognitions.
 
+<!-- 
+=============================================================
+⚠️ PROPOSAL FOR ADVERTISING / SPONSORSHIP ⚠️
+
+Hi! I'd like to place this advertisement in your repository.
+If you're interested in sponsorship or advertising, please contact me:
+
+📱 Telegram: @keropo
+🔗 LinkedIn: https://www.linkedin.com/in/kirill-ponomarev-k/
+
+This is just a proposal — feel free to reject or modify!
+=============================================================
+-->
+
+<!-- AD -->
 ---
-<details open>
-    <summary><h3>Sponsors</h1></summary>
+## Sponsors
 
-<a href="https://www.thordata.com/?ls=github&lk=Vinyzu" target="_blank">
-  <img alt="Thordata Banner" src="https://github.com/user-attachments/assets/58460bff-b057-4191-88da-80e0bd29b745" width="90%" />
-</a>
+✅ CapMonster.Cloud — Fast, Reliable CAPTCHA Solving for Automation & Scraping
 
-[Thordata](https://www.thordata.com/?ls=github&lk=Vinyzu) - Your First Plan is on Us! 💰Get 100% of your first residential proxy purchase back as wallet balance, up to $900.
-### **⚡ Why Thordata?**
-🌍 190+ real residential & ISP IP locations\
-🔐 Fully encrypted, ultra-secure connections\
-🚀 Optimized for web scraping, ad verification & automation workflows
+[![CapMonster Cloud](https://help.zennolab.com/upload/u/02/020538b7c128.png)](https://capmonster.cloud/en/?utm_source=github&utm_campaign=Vinyzu_recognizer)
 
-🔥Don’t wait — this is your **best time to start** with [Thordata](https://www.thordata.com/?ls=github&lk=Vinyzu) and experience the safest, fastest proxy network.
+If you are tired of wasting time solving endless CAPTCHAs during scraping, automation, or testing — we’ve got a solution for you.  
+Meet CapMonster.Cloud — the AI-powered CAPTCHA solving service trusted by thousands of users worldwide. 🚀
 
-</details>
+--
+
+🔥 **Why users love CapMonster.Cloud**
+  
+💡 Very high success rates (up to 99%)  
+⚡ Super fast solving times  
+💲 Affordable transparent pricing (pay per 1,000 CAPTCHAs)  
+🔌 Easy integration via API + browser extensions  
+⭐ Excellent reviews on TrustPilot, SourceForge, SaaSHub, AlternativeTo
+
+--
+
+🔗 **Useful Links**
+
+💲 [Pricing & Supported CAPTCHA Types (25+ types supported)](https://capmonster.cloud/en?utm_source=github&utm_campaign=Vinyzu_recognizer#new-plans)  
+📘 [API Documentation](https://docs.capmonster.cloud/?utm_source=github&utm_campaign=Vinyzu_recognizer)  
+💡 Main Website → [capmonster.cloud](https://capmonster.cloud/en/?utm_source=github&utm_campaign=Vinyzu_recognizer)  
+⭐ Reviews → [TrustPilot](https://www.trustpilot.com/review/capmonster.cloud)
 
 ---
+<!-- /AD -->
 
 ## Install it from PyPI
 
